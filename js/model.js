@@ -3,7 +3,7 @@
 let model = {
 
     game: { 
-        currentLevel: 1,    
+        currentScenario: 0,    
     },
 
     canvasProperties: {
@@ -12,14 +12,50 @@ let model = {
         backgroundColor: 'white'
     },
 
-    //The levels of the scenario
+    //levels of the scenario
     ScenarioLevels: 
-    {
-        scenarioID: 1,
+    [{
+        scenarioID: 0,// ikke i bruk, enda
         scenarioDescription: "This is the description of Scenario 1 \n and its tasks",
-        //This lists the boxes in the scenario
+        //boxes in the scenario
         BoxesList: 
         [
+            {   x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
+                w: 60, h: 60,
+                color: "lightgrey", 
+                text:"Start"
+            },
+
+            {
+                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
+                w: 120, h: 60,
+                color: "lightgrey", 
+                text: "Manual Check-in",
+            },
+            {
+                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
+                w: 60, h: 60,
+                color: "lightgrey", 
+                text: "End",
+            },
+
+            //Neste "boks" i dette scenarioet her..
+        ],
+
+
+    }, 
+    {
+        scenarioID: 1,// ikke i bruk, enda
+           scenarioDescription: "This is the description of Scenario 2 \n and its tasks",
+           //boxes in the scenario
+           BoxesList: 
+           [
+            {
+                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
+                w: 60, h: 60,
+                color: "lightgrey", 
+                text: "StartState",
+            },
             {   x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
                 w: 120, h: 60,
                 color: "lightgrey", 
@@ -38,10 +74,23 @@ let model = {
                 color: "lightgrey", 
                 text: "Security Check",
             },
-        ],
+            {
+                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
+                w: 60, h: 60,
+                color: "lightgrey", 
+                text: "EndState",
+            },
 
+               //Neste "boks" i dette scenarioet her..
+           ],
 
-    }
+           ScenarioSolution: [
+            //kanskje en liste av riktige tilknytninger mellom "Tasks", som kan brukes til å verifisere brukerens løsning
+           ]
+    },
+
+]
+
 
 
 

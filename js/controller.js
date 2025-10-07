@@ -4,6 +4,7 @@ let context = null;
 
 function initCanvas() 
 {
+    //Henter canvas elementet, laget i view.js, og setter bredde, høyde og farge
     canvas = document.getElementById('BPMNcanvas');
     context = canvas.getContext('2d');
     context.canvas.width = model.canvasProperties.width;
@@ -11,7 +12,7 @@ function initCanvas()
     context.fillStyle = model.canvasProperties.backgroundColor;
     context.fillRect(0, 0, model.canvasProperties.width, model.canvasProperties.height);
 
-    // Legger til listeners, slik at funksjoner blir kalt ved musehendelser
+    // Legger til listeners, slik at funksjoner blir kalt ved musehendelser ('intern event systemet henter', funksjonen som skal kalles)
     canvas.addEventListener('mousedown', mouseDown);
     canvas.addEventListener('mousemove', mouseMove);
     canvas.addEventListener('mouseup', mouseUp); 
@@ -22,8 +23,8 @@ function initCanvas()
 }
 
 function loadScenario(){
-    //Henter info fra model, og oppdaterer view
-    document.getElementById('scenarioTextHeader').innerText = model.ScenarioLevels.scenarioDescription;
+    //Henter info fra modellen, og oppdaterer view. Her henter den teksten for det nåværende scenarioet
+    document.getElementById('scenarioTextHeader').innerText = model.ScenarioLevels[model.game.currentScenario].scenarioDescription;
 }
 
 // Henter bokser fra modellen...
@@ -31,9 +32,15 @@ let boxes = processBoxes();
 
 // ...etter å ha kalkulert x posisjon for boksene, basert på antall bokser slik at de spres utover
 function processBoxes(){
-    let boxes = model.ScenarioLevels.BoxesList;
+    //Vi bruker "currentScenario" som en "level teller". Scenario 0 referer da til både første scenario, og index 0 i listen av scenarioer
+    let boxes = model.ScenarioLevels[model.game.currentScenario].BoxesList; 
+    let nextXpos = 0;
     for (let i = 0; i < boxes.length; i++) {
-        boxes[i].x = (i*150)+50;}
+        //Bruker bredden på forrige boks (om denne boksen ikke er index 0), for å regne ut neste x posisjon, pluss litt padding, sprer boksene
+        (i == 0) ? nextXpos +=20 : nextXpos += boxes[i-1].w+20; //Forenklet if statement, "om i er 0, så legg til 20, ellers legg til bredden på forrige boks + 20px"
+        boxes[i].x = nextXpos 
+        } 
+        console.log("Boxes processed: ", boxes);
     return boxes;
 }
 
@@ -46,7 +53,7 @@ let offsetY = 0;
 function draw() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     //Går gjennom alle boksene i array, og tegner dem
-    for (const box of boxes) {
+    for (let box of boxes) {
         // Tegner boksen først
         console.log("Drawing box at "+box.x+","+box.y);
         context.fillStyle = box.color;
@@ -113,6 +120,38 @@ function mouseLeave(e) {
   draggingBox = null;
 };
 
-//if(canvas != null){draw();}
 
+//Midlertidig, løsning, trykk "n" for å gå til neste scenario
+document.addEventListener('keydown', (event) => {
+    if (event.key === "n") {
+        nextScenario();
+    }});
+
+
+//Laster neste scenario
+function nextScenario(){
+    if(model.game.currentScenario < model.ScenarioLevels.length-1){
+        model.game.currentScenario += 1;
+        boxes = processBoxes(); //henter nye bokser fra the nye scenariet.
+        loadScenario(); //oppdaterer teksten i view
+        draw(); //tegner opp alt på nytt, siden nytt scenario er hentet
+    } else {
+        //Om det ikke er flere scenario, lag en alert box
+        //alert("Ikke flere scenarioer!");
+        showLinkToQuiz();
+        
+    }
+}
+
+//Viser link til quiz, etter siste scenario
+function showLinkToQuiz(){
+    //Viser en alert box med link til quiz
+    document.getElementById('scenarioTextHeader').innerHTML = /*html*/`
+    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">All scenarios completed. Click here to take the quiz.</a>
+    
+    
+  
+    
+    `; 
+}
 

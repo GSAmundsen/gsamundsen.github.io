@@ -1,2 +1,5 @@
-Kunne dra linje mellom bokser
+- Kunne lage linjer mellom bokser, som følger boksene. Tilknyttningene må mellomlagres for verifisering
 
+- Tegne opp Pool (Airport) men Lanes (Check-in, Security Check?, Gate Area?) i canvas. Vertikal tekst
+
+- Lage verifiseringsløsning, som sammenligner mellomlagrede tilknytninger, mot de som er lagret i "ScenarioLevels" i modellen.
