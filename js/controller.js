@@ -1,6 +1,7 @@
 //Globale vars
 let canvas = null;
 let context = null;
+let boxes = [];
 
 function initCanvas() 
 {
@@ -18,17 +19,31 @@ function initCanvas()
     canvas.addEventListener('mouseup', mouseUp); 
     console.log(canvas);
 
+    //Laster inn all data, så kaller draw();
     loadScenario();
-    draw(); //Tegn opp alt (på nytt)
 }
 
 function loadScenario(){
+
+    //Scenario data fra JSON må lastes inn her.
+
+
+    //Om scenariodata fra JSON IKKE skal lastes inn i modellen, må det endres HVOR systemet henter data fra.
+    //Jeg tenker at aller helst bør man ha en mellomlagring, som enten tar inn JSON data, eller henter fra modellen. 
+    //Så kan systemet bruke denne mellomlagringen som "kilde" for å hente data til view og controller.
+
     //Henter info fra modellen, og oppdaterer view. Her henter den teksten for det nåværende scenarioet
     document.getElementById('scenarioTextHeader').innerText = model.ScenarioLevels[model.game.currentScenario].scenarioDescription;
+
+    // Henter bokser fra modellen...
+    boxes = processBoxes(); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
+
+
+    //Når alt er lastet, tegn opp alt.
+    draw()
 }
 
-// Henter bokser fra modellen...
-let boxes = processBoxes();
+
 
 // ...etter å ha kalkulert x posisjon for boksene, basert på antall bokser slik at de spres utover
 function processBoxes(){

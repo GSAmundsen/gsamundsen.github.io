@@ -3,3 +3,5 @@
 - Tegne opp Pool (Airport) men Lanes (Check-in, Security Check?, Gate Area?) i canvas. Vertikal tekst
 
 - Lage verifiseringsløsning, som sammenligner mellomlagrede tilknytninger, mot de som er lagret i "ScenarioLevels" i modellen.
+
+Hvert scenario skal bygge på de forrige. 
