@@ -2,6 +2,9 @@
 let canvas = null;
 let context = null;
 let boxes = [];
+//mellomlagrer brukerens løsning. I denne foreløpige løsningen, lagres KUN transitions mellom bokser.
+let currentUserSolution = [["start","task1"],["start", "task2"],["task2","task1"],["task1","end"]]; 
+
 
 function initCanvas() 
 {
@@ -169,4 +172,39 @@ function showLinkToQuiz(){
     
     `; 
 }
+//Midlertidig, funksjon for å teste løsning i console.
+function testSolution(){
+    console.log("Brukerens løsning: ", currentUserSolution,"\n\n Prøver å verifisere løsning...");
+    verifySolution();
+}
 
+//Sjekker brukernes løsning mot alle riktige løsninger i modellen
+function verifySolution() {
+    let scenarioSolutions = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution
+    console.log("Loaded Scenario Solutions ", scenarioSolutions)
+    
+    // We go through all the Arrays (passenger scenarios) in the ScenarioSolutions, one by one
+    for (let i = 0; i < scenarioSolutions.length; i++) {
+        let passengerScenario = scenarioSolutions[i];
+        console.log("current passenger scenario from the model ", passengerScenario)
+      
+      
+        //For hver (.every) transition par ["x","y"] i "passenger solution array" [["x","y"],["x","z"]] i modellen (ScenarioSolutions)..
+        let isMatch = passengerScenario.every(
+        //..om et par er en del av (.some) brukerens løsning (array)
+        (transitionPair) => currentUserSolution.some(
+            //er denne (vi er i en for-løkke) passasjerens transition array lik NOEN av parene i currentUserSolution (ex. ["start", "end"]
+            //for eksempel, "er det et tilfelle hvor "start" matcher "start" AND "end" matcher "end" 
+            (userPair) => transitionPair[0] === userPair[0] && transitionPair[1] === userPair[1]
+            )
+        );
+        //Finner vi en match i brukerens løsning, for hvert transition pair, i denne passasjerens array (model.ScenarioSolutions[0,1,2, etc])..
+        if (isMatch) {
+            console.log("Passenger "+(i+1)+" = "+"%c PASS", "color: green; font-size:18px;"); //Can maybe add a passenger description here? "Passenger with passport, no baggage"
+        } 
+        //om ikke...
+        else {
+            console.log("Passenger "+(i+1)+" = "+"%c FAIL", "color: red; font-size:18px;"); //Same here, so the user understands WHICH passenger failed?
+        }
+    }
+}
