@@ -1,0 +1,1 @@
+Kanskje man kan ligge JSON filene for våre innebygde scenarier, og andres "custom" scenarier her, så lastes de herfra? Javascript har jo funksjonalitet for å velge fra lokale filer, feks ved import
