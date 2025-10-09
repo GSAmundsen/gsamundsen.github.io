@@ -2,6 +2,10 @@
 
 - Tegne opp Pool (Airport) men Lanes (Check-in, Security Check?, Gate Area?) i canvas. Vertikal tekst
 
-- Lage verifiseringsløsning, som sammenligner mellomlagrede tilknytninger, mot de som er lagret i "ScenarioLevels" i modellen.
+- Hvert scenario skal bygge på de forrige. 
 
-Hvert scenario skal bygge på de forrige. 
+
+Gerry: - Lage verifiseringsløsning, som sammenligner mellomlagrede tilknytninger, mot de som er lagret i "ScenarioLevels" i modellen.
+Users solution is stored as an Array of transition pairs(array). The required Passenger transitions defined in 
+the model.ScenarioLevels.ScenarioSolutions are tested against the users solution, resulting in a PASS if 
+all transitions for that passenger matches, or FAIL if one transition pair is not present in the users solution.
