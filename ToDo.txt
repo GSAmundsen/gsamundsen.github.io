@@ -1,4 +1,5 @@
-- Kunne lage linjer mellom bokser, som følger boksene. Tilknyttningene må mellomlagres for verifisering Thomas; brukte meste parten av helgen min på dette. Prøver å lage en funksjon for å slette koblinger ved å trykke på den, får ta det til uken
+- Kunne lage linjer mellom bokser, som følger boksene. Tilknyttningene må mellomlagres for verifisering 
+Thomas; brukte meste parten av helgen min på dette. Prøver å lage en funksjon for å slette koblinger ved å trykke på den, får ta det til uken
 
 - Tegne opp Pool (Airport) men Lanes (Check-in, Security Check?, Gate Area?) i canvas. Vertikal tekst
 

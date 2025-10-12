@@ -10,7 +10,7 @@ let connecting = false;
 let startNode = null;
 let tempLineEnd = { x: 0, y: 0 };
 
-canvas?.addEventListener("contextmenu", (e) => e.preventDefault());
+
 
 
 function initCanvas() 
@@ -27,6 +27,9 @@ function initCanvas()
     canvas.addEventListener('mousedown', mouseDown);
     canvas.addEventListener('mousemove', mouseMove);
     canvas.addEventListener('mouseup', mouseUp); 
+
+    canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+
     console.log(canvas);
 
     //Laster inn all data, så kaller draw();
@@ -105,11 +108,14 @@ function draw() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   // Tegn alle koblinger først
-  for (let c of connections) {
-    const from = boxes.find(b => b.nodeId === c.fromId);
-    const to = boxes.find(b => b.nodeId === c.toId);
-    if (from && to) {
-      drawArrow(from.x + from.w / 2, from.y + from.h / 2, to.x + to.w / 2, to.y + to.h / 2);
+  if(Object.keys(connections).length != 0) //Om vi skal bruke "Dictionary" (Objekt, i javascript siden js ikke bruker dict.)
+  {
+    for (let c of connections) {
+      const from = boxes.find(b => b.nodeId === c.fromId);
+      const to = boxes.find(b => b.nodeId === c.toId);
+      if (from && to) {
+        drawArrow(from.x + from.w / 2, from.y + from.h / 2, to.x + to.w / 2, to.y + to.h / 2);
+      }
     }
   }
 
@@ -125,8 +131,19 @@ function draw() {
   }
 }
 
+// function deleteConnections()
+// {
+//     console.log("Cleared")
+//     connections = {};
+//     draw();
+// }
+
 function resetConnections() {
-  connections = [];
+  if(Object.keys(connections).length != 0){ 
+      let lastLine = connections.pop();
+      delete connections[lastLine];
+  }
+
   currentUserSolution = [];
   draw();
   console.log("Alle koblinger slettet");
@@ -223,11 +240,16 @@ function mouseUp(e) {
 }
 
 
-//Midlertidig, løsning, trykk "n" for å gå til neste scenario
+//Midlertidig, løsning, trykk "n" for å gå til neste scenario, Delete for å slette connections.
 document.addEventListener('keydown', (event) => {
-    if (event.key === "n") {
+    if(event.key == "n") {
         nextScenario();
-    }});
+    }
+    if(event.key == 'Delete'){
+      resetConnections();
+    }
+  
+  });
 
 
 //Laster neste scenario
@@ -261,6 +283,8 @@ function testSolution(){
     console.log("Brukerens løsning: ", currentUserSolution,"\n\n Prøver å verifisere løsning...");
     verifySolution();
 }
+
+
 
 //Sjekker brukernes løsning mot alle riktige løsninger i modellen
 function verifySolution() {
