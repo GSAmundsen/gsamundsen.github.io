@@ -4,6 +4,13 @@ let context = null;
 let boxes = [];
 //mellomlagrer brukerens løsning. I denne foreløpige løsningen, lagres KUN transitions mellom bokser.
 let currentUserSolution = [["start","task1"],["start", "task2"],["task2","task1"],["task1","end"]]; 
+// === Globale variabler for koblinger ===
+let connections = []; // {fromId: "node_1", toId: "node_3"}
+let connecting = false;
+let startNode = null;
+let tempLineEnd = { x: 0, y: 0 };
+
+canvas?.addEventListener("contextmenu", (e) => e.preventDefault());
 
 
 function initCanvas() 
@@ -50,93 +57,170 @@ function loadScenario(){
 
 // ...etter å ha kalkulert x posisjon for boksene, basert på antall bokser slik at de spres utover
 function processBoxes(){
-    //Vi bruker "currentScenario" som en "level teller". Scenario 0 referer da til både første scenario, og index 0 i listen av scenarioer
     let boxes = model.ScenarioLevels[model.game.currentScenario].BoxesList; 
     let nextXpos = 0;
+
     for (let i = 0; i < boxes.length; i++) {
-        //Bruker bredden på forrige boks (om denne boksen ikke er index 0), for å regne ut neste x posisjon, pluss litt padding, sprer boksene
-        (i == 0) ? nextXpos +=20 : nextXpos += boxes[i-1].w+20; //Forenklet if statement, "om i er 0, så legg til 20, ellers legg til bredden på forrige boks + 20px"
-        boxes[i].x = nextXpos 
-        } 
-        console.log("Boxes processed: ", boxes);
+        // Gi hver boks en unik ID i formatet "node_N"
+        boxes[i].nodeId = `node_${i + 1}`;
+
+        // Beregn x-posisjon
+        (i == 0) ? nextXpos += 20 : nextXpos += boxes[i-1].w + 20;
+        boxes[i].x = nextXpos;
+    } 
+    console.log("Boxes processed: ", boxes);
     return boxes;
-}
+} 
 
 //Globale variabler som brukes til å holde styr på hvilken boks som dras, og offset for å få riktig posisjon
 let draggingBox = null;
 let offsetX = 0;
 let offsetY = 0;
 
+function drawArrow(fromX, fromY, toX, toY) {
+  const headlen = 10;
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const angle = Math.atan2(dy, dx);
+  context.beginPath();
+  context.moveTo(fromX, fromY);
+  context.lineTo(toX, toY);
+  context.strokeStyle = "blue";
+  context.lineWidth = 2;
+  context.stroke();
+
+  // Tegn pilspiss
+  context.beginPath();
+  context.moveTo(toX, toY);
+  context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+  context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+  context.closePath();
+  context.fillStyle = "blue";
+  context.fill();
+}
+
+
 //Sletter canvas, og tegner opp alt på nytt. Kalles hovedsakelig når musen flyttes (mouseMove())
 function draw() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    //Går gjennom alle boksene i array, og tegner dem
-    for (let box of boxes) {
-        // Tegner boksen først
-        console.log("Drawing box at "+box.x+","+box.y);
-        context.fillStyle = box.color;
-        context.fillRect(box.x, box.y, box.w, box.h);
-        
-        //..så teksten, ellers havner teksten under boksen, kanskje legge dette i CSS?
-        context.fillStyle = "black";
-        context.font = "14px Arial";  
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(box.text, box.x + box.w / 2, box.y + box.h / 2); //Teksten i midten av boksen
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Tegn alle koblinger først
+  for (let c of connections) {
+    const from = boxes.find(b => b.nodeId === c.fromId);
+    const to = boxes.find(b => b.nodeId === c.toId);
+    if (from && to) {
+      drawArrow(from.x + from.w / 2, from.y + from.h / 2, to.x + to.w / 2, to.y + to.h / 2);
+    }
+  }
+
+  // Tegn alle bokser oppå
+  for (let box of boxes) {
+    context.fillStyle = box.color;
+    context.fillRect(box.x, box.y, box.w, box.h);
+    context.fillStyle = "black";
+    context.font = "14px Arial";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(box.text, box.x + box.w / 2, box.y + box.h / 2);
   }
 }
 
-//Når brukeren trykker ned musen...
-function mouseDown(e) {
-    const rect = canvas.getBoundingClientRect(); //Finner posisjon av canvas i forhold til vinduet
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    console.log(rect);
-    
+function resetConnections() {
+  connections = [];
+  currentUserSolution = [];
+  draw();
+  console.log("Alle koblinger slettet");
+}
 
-  // Sjekker om brukeren klikker "innenfor" en boks, kanskje det finns en bedre måte?
+// Når brukeren trykker ned musen
+function mouseDown(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  // Høyreklikk: start å tegne en pil
+  if (e.button === 2) {
+    for (let b of boxes) {
+      if (
+        mouseX > b.x && mouseX < b.x + b.w &&
+        mouseY > b.y && mouseY < b.y + b.h
+      ) {
+        connecting = true;
+        startNode = b;
+        tempLineEnd = { x: mouseX, y: mouseY };
+        console.log("Startet kobling fra:", b.nodeId);
+        return;
+      }
+    }
+  } else {
+    // Venstreklikk: dra boksen
     for (let i = boxes.length - 1; i >= 0; i--) {
       const b = boxes[i];
       if (
-            mouseX > b.x &&
-            mouseX < b.x + b.w &&
-            mouseY > b.y &&
-            mouseY < b.y + b.h
-        ) 
-      {
-        //Nå riktig boks, i listen av alle boksene i dette scenarioet er funnet, settes dette "draggingBox"
+        mouseX > b.x && mouseX < b.x + b.w &&
+        mouseY > b.y && mouseY < b.y + b.h
+      ) {
         draggingBox = b;
-        console.log("Started dragging box: ", b);
-        //får riktig posisjon på boksen i forhold til musen, sånn at musen holder seg der man trykket, og ikke på 0,0 ift boks (kosmetisk)
         offsetX = mouseX - b.x;
         offsetY = mouseY - b.y;
         break;
       }
+    }
   }
-};
+}
 
-//Hver gang musen flyttes, og en boks er "dragging", oppdateres posisjonen til boksen
+// Når musen beveges
 function mouseMove(e) {
-  if (!draggingBox) return;// om ingen boks skal dras, gjør ingenting
-  
-  const rect = canvas.getBoundingClientRect();  //igjen, posisjon av canvas ift vindu
+  const rect = canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
 
+  // Hvis vi tegner en pil
+  if (connecting && startNode) {
+    tempLineEnd = { x: mouseX, y: mouseY };
+    draw();
+    drawArrow(startNode.x + startNode.w / 2, startNode.y + startNode.h / 2, mouseX, mouseY);
+    return;
+  }
+
+  // Vanlig flytting av bokser
+  if (!draggingBox) return;
   draggingBox.x = mouseX - offsetX;
   draggingBox.y = mouseY - offsetY;
+  draw();
+}
 
-  draw(); //Tegn opp alt på nytt, for hver pixl musen flyttes
-};
-
-//Disse to kansellerer dragging når musen slippes eller utenfor canvas
+// Når musen slippes
 function mouseUp(e) {
-  draggingBox = null;
-};
+  if (connecting && startNode) {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
 
-function mouseLeave(e) {
+    for (let b of boxes) {
+      if (
+        mouseX > b.x && mouseX < b.x + b.w &&
+        mouseY > b.y && mouseY < b.y + b.h &&
+        b !== startNode
+      ) {
+        const newConn = { fromId: startNode.nodeId, toId: b.nodeId };
+
+        // Sjekk om koblingen finnes fra før
+        if (!connections.some(c => c.fromId === newConn.fromId && c.toId === newConn.toId)) {
+          connections.push(newConn);
+          currentUserSolution.push([newConn.fromId, newConn.toId]);
+          console.log("Ny kobling:", newConn);
+        }
+      }
+    }
+
+    connecting = false;
+    startNode = null;
+    draw();
+  }
+
   draggingBox = null;
-};
+}
 
 
 //Midlertidig, løsning, trykk "n" for å gå til neste scenario
@@ -208,3 +292,4 @@ function verifySolution() {
         }
     }
 }
+
