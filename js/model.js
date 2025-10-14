@@ -1,6 +1,10 @@
 // Datamodellen for spillet
 
 let model = {
+    settings:{
+        selectedBoxColor: 'rgba(171, 224, 224, 0.91)',
+        standardBoxColor: 'rgba(221, 212, 212, 0.91)'
+    },
 
     game: { 
         currentScenario: 0,    

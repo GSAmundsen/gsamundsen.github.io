@@ -10,6 +10,7 @@ let connecting = false;
 let startNode = null;
 let tempLineEnd = { x: 0, y: 0 };
 
+let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket på, slik at vi kan hente ut nodeID, som kan brukes til å slette tilkn.
 
 
 
@@ -121,7 +122,10 @@ function draw() {
 
   // Tegn alle bokser oppå
   for (let box of boxes) {
-    context.fillStyle = box.color;
+    //Om vi har valg en boks, og denne boxen i for løkken har .nodeId lik boksen vi har valgt, sett custom farge definert i model. 
+    if(currentSelectedBox != null && currentSelectedBox.nodeId == box.nodeId){context.fillStyle = model.settings.selectedBoxColor;}
+    //Om ikke, sett custom standard farge definert i modellen. 
+    else{context.fillStyle = model.settings.standardBoxColor;}
     context.fillRect(box.x, box.y, box.w, box.h);
     context.fillStyle = "black";
     context.font = "14px Arial";
@@ -131,29 +135,49 @@ function draw() {
   }
 }
 
-// function deleteConnections()
-// {
-//     console.log("Cleared")
-//     connections = {};
-//     draw();
-// }
 
-function resetConnections() {
-  if(Object.keys(connections).length != 0){ 
-      let lastLine = connections.pop();
-      delete connections[lastLine];
+
+function resetConnections(resetAll = false) {
+  //En liten "override" til en "Reset" knapp, resetAll vil alltid være default False, om den er True sletter den alle koblinger
+  if(resetAll == true){
+    currentUserSolution = [];
+    draw();
+    return;
   }
 
-  currentUserSolution = [];
+  if(Object.keys(connections).length != 0){  //Om det er noen tilkoblinger..
+    if(currentSelectedBox != null){ //og Om vi har valgt en boks...
+      connections = connections.filter(object => { //Siden vi bruker en liste med objecter, sjekker vi om toID eller fromID inneholder "nodeID_X",
+        //.filter() går igjennom alle objektene i en liste, returneres True for et objekt er kommer den med i den "nye" listen, om False, så ikke.
+        console.log("Koblinger til/fra "+ currentSelectedBox.nodeId+ " slettet fra " + object);
+        if(!object.fromId.includes(currentSelectedBox.nodeId) && !object.toId.includes(currentSelectedBox.nodeId))//Om nodeID'en vi ser etter finnes i enten toID eller fromID..
+          {
+            return true;// Om hverken toId eller fromId inneholder "nodeId_x" returneres True, da dette objektet skal være med i listen.
+          }else{return false;} 
+        })
+    }else{//Har vi ikke valgt noen boks, så bare sletter vi siste tilknytningen (objektet) i listen. 
+      let lastLine = connections.pop();
+      delete connections[lastLine];
+      console.log("Siste kobling slettet");
+    }
+  }
+
+  //Tegner alt på nytt, siden vi har endrer listene
   draw();
-  console.log("Alle koblinger slettet");
 }
+
+
+
+
+
 
 // Når brukeren trykker ned musen
 function mouseDown(e) {
   const rect = canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
+  
+  currentSelectedBox = null; //Om vi trykker andre steder enn på en boks, så nullstill slik at vi ikke har en boks valgt.
 
   // Høyreklikk: start å tegne en pil
   if (e.button === 2) {
@@ -178,12 +202,18 @@ function mouseDown(e) {
         mouseY > b.y && mouseY < b.y + b.h
       ) {
         draggingBox = b;
+        currentSelectedBox = b; //Lagrer den siste boksen vi trykket på.
         offsetX = mouseX - b.x;
         offsetY = mouseY - b.y;
+
+   
         break;
       }
     }
+    if(currentSelectedBox != null){console.log(currentSelectedBox.nodeId)}; // Testing. Hvilken box.nodeID er trykket på
   }
+
+  draw(); // Må ha en draw call her for å kunne endre farge kun ved "klikk" og ikke bare "drag".
 }
 
 // Når musen beveges
