@@ -10,6 +10,7 @@ let connecting = false;
 let startNode = null;
 let tempLineEnd = { x: 0, y: 0 };
 
+let testResults = []; //List of strings, PASS or FAIL. Index needs to match the corresponding entry in ScenarioPassengerTypes and ScenarioSolutions
 let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket på, slik at vi kan hente ut nodeID, som kan brukes til å slette tilkn.
 
 
@@ -52,9 +53,28 @@ function loadScenario(){
     // Henter bokser fra modellen...
     boxes = processBoxes(); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
 
+    //Setter Passasjer description, er egen funksjon fordi den endres ved verifisering. 
+    setTaskDescription();
 
     //Når alt er lastet, tegn opp alt.
     draw()
+}
+
+function setTaskDescription(results = [])
+{
+  let passengerTypes = model.ScenarioLevels[model.game.currentScenario].ScenarioPassengerTypes;
+  let textObject = document.getElementById('taskText');
+  textObject.innerHTML = "";
+
+  for(let i = 0; i < passengerTypes.length; i++)
+      {
+        //Om vi har resultater som skal legges til hver linje i PassengerTypes, så legg dette til i HTML koden..
+        (results.length != 0) ? textObject.innerHTML += 
+        //.. Passasjertype beskrivelsen + resultatet. Om resultatet i listen er PASS, skal teksten være grønn, om ikke, så Rød. <br> er linebreak.
+        `${passengerTypes[i]} - ${(results[i] == "PASS") ? "<span style='color: green;'>PASS</span>" : "<span style='color: red;'>FAIL</span>"} </span> <br>` 
+        : textObject.innerHTML += `${passengerTypes[i]} <br>`;
+        console.log(results);
+      }
 }
 
 
@@ -323,6 +343,8 @@ function testSolution(){
 
 //Sjekker brukernes løsning mot alle riktige løsninger i modellen
 function verifySolution() {
+    testResults = [] //nullstiller tidligere resultater
+
     let scenarioSolutions = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution
     console.log("Loaded Scenario Solutions ", scenarioSolutions)
     
@@ -344,11 +366,15 @@ function verifySolution() {
         //Finner vi en match i brukerens løsning, for hvert transition pair, i denne passasjerens array (model.ScenarioSolutions[0,1,2, etc])..
         if (isMatch) {
             console.log("Passenger "+(i+1)+" = "+"%c PASS", "color: green; font-size:18px;"); //Can maybe add a passenger description here? "Passenger with passport, no baggage"
+            testResults.push("PASS");
         } 
         //om ikke...
         else {
             console.log("Passenger "+(i+1)+" = "+"%c FAIL", "color: red; font-size:18px;"); //Same here, so the user understands WHICH passenger failed?
+            testResults.push("FAIL");
         }
     }
+
+    setTaskDescription(testResults);
 }
 

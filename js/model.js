@@ -20,7 +20,8 @@ let model = {
     ScenarioLevels: 
     [{
         scenarioID: 0,// ikke i bruk, enda
-        scenarioDescription: `
+        //Kanskje dele opp passasjerbeskrivelse i lister, tilsvarende ScenarioSolution[], som beskriver riktig tilkn. for hver passasjer
+        scenarioDescription: ` 
         All Passengers with tickets to go through the Check-in.\n
         Passengers that have no luggage needs to go to the Baggage Drop first.\n
         Passengers without passports are rejected.`,
@@ -56,6 +57,13 @@ let model = {
             },
 
             //Neste "boks" i dette scenarioet her..
+        ],
+        ScenarioPassengerTypes: //This needs to match the ScenarioSolution
+        [
+            "All Passengers with tickets to go through the Check-in.",
+            "Passengers that have no luggage needs to go to the Baggage Drop first.",
+            "Passengers without passports are rejected.",
+
         ],
 
         ScenarioSolution: 
