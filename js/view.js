@@ -4,13 +4,16 @@
 function updateView() {
     
     document.getElementById('app').innerHTML = /*html*/`
-    <div><h4 id="scenarioTextHeader"></h4>
+    <div style="text-align: center;">
+    <div style="display: inline-block; border: 2px solid grey;  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.75);"><h4 id="scenarioTextHeader"></h4>
     <p>Example test: Open the console and run testSolution() . This tests the solution in the scenario against the current hardcoded user solution in the controller</p>
     <p>Press the 'Delete' key to remove connections. Click a node first to delete connections to/from that node</p>
     
     </div>
+    <div style="display: inline-block; border: 2px solid grey;  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.75);margin-top: 1%;">
     <canvas id="BPMNcanvas"></canvas>
-    
+    </div>
+    </div>
   
     
     `; 

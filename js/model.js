@@ -11,8 +11,8 @@ let model = {
     },
 
     canvasProperties: {
-        width: 1000,
-        height: 700,
+        width: window.screen.width*0.80,
+        height: window.screen.height*0.5,
         backgroundColor: 'white'
     },
 

@@ -62,15 +62,20 @@ function loadScenario(){
 // ...etter å ha kalkulert x posisjon for boksene, basert på antall bokser slik at de spres utover
 function processBoxes(){
     let boxes = model.ScenarioLevels[model.game.currentScenario].BoxesList; 
-    let nextXpos = 0;
+    //Spawne bokser i midten av x akse i canvas
+    let centerOffset = boxes.reduce((accumulator, bx) => {return accumulator+bx.w},0) //Går igjennom alle box'ene, og summerer bredde
+    let nextXpos = (canvas.width / 2) - (centerOffset/2); //start X posisjon er halve bredden av canvas, - total lenge av boxer og padding
 
     for (let i = 0; i < boxes.length; i++) {
         // Gi hver boks en unik ID i formatet "node_N"
         boxes[i].nodeId = `node_${i + 1}`;
 
-        // Beregn x-posisjon
-        (i == 0) ? nextXpos += 20 : nextXpos += boxes[i-1].w + 20;
+        // Beregn x-posisjon + padding, basert på bredden av forrige box
+        if(i != 0) {nextXpos+=boxes[i-1].w + 10}
+
+        // Sett x og y posisjon
         boxes[i].x = nextXpos;
+        boxes[i].y = 5;
     } 
     console.log("Boxes processed: ", boxes);
     return boxes;
@@ -252,8 +257,8 @@ function mouseUp(e) {
       ) {
         const newConn = { fromId: startNode.nodeId, toId: b.nodeId };
 
-        // Sjekk om koblingen finnes fra før
-        if (!connections.some(c => c.fromId === newConn.fromId && c.toId === newConn.toId)) {
+        // Sjekk om koblingen finnes fra før, +sjekker at koblingen ikke matcher "bakover"
+        if (!connections.some(c => (c.fromId === newConn.fromId && c.toId === newConn.toId) || (c.fromId === newConn.toId && c.toId === newConn.fromId))) {
           connections.push(newConn);
           currentUserSolution.push([newConn.fromId, newConn.toId]);
           console.log("Ny kobling:", newConn);
