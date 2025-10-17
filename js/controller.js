@@ -3,15 +3,20 @@ let canvas = null;
 let context = null;
 let boxes = [];
 
-function initCanvas() 
+async function initCanvas() 
 {
-    //Henter canvas elementet, laget i view.js, og setter bredde, høyde og farge
+    const scenarioData = await loadScenarioJSON('scenarioData/scenario.json')
+
+    model.loadedScenarioData = scenarioData;
+    loadGameData();
+
+  //Henter canvas elementet, laget i view.js, og setter bredde, høyde og farge
     canvas = document.getElementById('BPMNcanvas');
     context = canvas.getContext('2d');
-    context.canvas.width = model.canvasProperties.width;
-    context.canvas.height = model.canvasProperties.height;
-    context.fillStyle = model.canvasProperties.backgroundColor;
-    context.fillRect(0, 0, model.canvasProperties.width, model.canvasProperties.height);
+    context.canvas.width = model.game.canvasWidth;
+    context.canvas.height = model.game.canvasHeight;
+    context.fillStyle = model.staticProperties.canvasBackgroundColor;
+    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
 
     // Legger til listeners, slik at funksjoner blir kalt ved musehendelser ('intern event systemet henter', funksjonen som skal kalles)
     canvas.addEventListener('mousedown', mouseDown);
@@ -20,12 +25,108 @@ function initCanvas()
     console.log(canvas);
 
     //Laster inn all data, så kaller draw();
-    loadScenario();
+    const scenario = findScenario
+    loadScenario(scenario);
 }
 
-function loadScenario(){
+// Loads objects from loadedScenarioData into model.game
+function loadGameData(){
+  const gameData = model.loadedScenarioData.aboutScenarios;
+  model.game.numberOfScenarios = gameData.numberOfScenarios
+  model.game.mainTitle = gameData.mainTitle
+  model.game.moduleDescription = gameData.moduleDescription
+  model.game.sequential = gameData.sequential
+  model.game.building = gameData.building
+  model.game.canvasWidth = gameData.canvasSize.width
+  model.game.canvasHeight = gameData.canvasSize.height
+}
 
-    //Scenario data fra JSON må lastes inn her.
+function findScenario(){
+  // If there is a current scenario it is marked as finished
+  if (model.game.currentScenario !== null) {
+    model.game.finishedScenarios.push(model.game.currentScenario);
+  }
+
+  // Check if all scenarios are completed
+  if (model.game.finishedScenarios.length >= model.game.numberOfScenarios){
+    return 0;
+  }
+
+  // Sequential mode: next scenario in order
+  if (model.game.sequential){
+    return model.game.finishedScenarios.length;
+  }
+
+  // Non-sequential: pick random unfinished scenario
+  let availableScenarios = []
+  for (let i = 0; i < model.game.numberOfScenarios; i++) {
+    const scenarioId = `scenario_${i}`
+    if (!model.game.finishedScenarios.includes(scenarioId)) {
+      availableScenarios.push(i);
+    }
+  }
+  const randomIndex = Math.floor(Math.random() * availableScenarios.length);
+  return availableScenarios[randomIndex];
+}
+
+// Loads specific scenario into model.currentScenario
+function loadScenario(scenario){
+  if (scenario === 0) {
+    // send player to after game screen
+  }
+  // preserves old scenario data if scenarios are building and wipes currentScanrio clean
+  if (model.game.building === true) {
+    const lastScenario = model.currentScenario
+  }
+  resetCurrentScenario();
+
+
+  // loads in new scenario data
+  const scenarioData = model.loadedScenarioData.scenarios[scenario];
+
+  model.currentScenario.scenarioTitle = scenarioData.scenarioTitle
+  model.currentScenario.scenarioDescription = scenarioData.scenarioDescription
+  model.currentScenario.tutorialImage = scenarioData.tutorialImage
+  model.currentScenario.failureImage = scenarioData.failureImage
+
+  const tokens = scenarioData.tokens
+  for (let token of tokens) {
+    const tokenInstance = new Token(token);
+    model.currentScenario.tokens.push(tokenInstance);
+  }
+
+  const pools = scenarioData.static.pools
+  for (let pool of pools) {
+    const poolInstance = new Pool(pool);
+    model.currentScenario.pools.push(poolInstance);
+  }
+
+  const lanes = scenarioData.static.lanes
+  for (let lane of lanes) {
+    const laneInstance = new Lane(lane);
+    model.currentScenario.lanes.push(laneInstance);
+  }
+
+  const nodes = scenarioData.static.nodes
+  for (let node of nodes) {
+    const nodeInstance = new Node(node);
+    model.currentScenario.staticNodes.push(nodeInstance);
+  }
+
+  const connectors = scenarioData.static.connectors
+  for (let connector of connectors) {
+    const connectorInstance = new Connector(connector);
+    model.currentScenario.staticConnectors.push(connectorInstance);
+  }
+
+  const dynamicNodes = scenarioData.dynamic
+  for (let node of dynamicNodes) {
+    const nodeInstance = new Node(node);
+    model.currentScenario.dynamicNodesInMenu.push(nodeInstance);
+  }
+    
+  
+  //Scenario data fra JSON må lastes inn her.
 
 
     //Om scenariodata fra JSON IKKE skal lastes inn i modellen, må det endres HVOR systemet henter data fra.
@@ -43,6 +144,22 @@ function loadScenario(){
     draw()
 }
 
+function resetCurrentScenario() {
+    model.currentScenario = {
+        scenarioTitle: null,
+        scenarioDescription: null,
+        tutorialImage: null,
+        failureImage: null,
+        pools: [],
+        lanes: [],
+        staticNodes: [],
+        staticConnectors: [],
+        dynamicNodesInMenu: [],
+        dynamicNodesOnCanvas: [],
+        dynamicConnectors: [],
+        tokens: []
+    };
+}
 
 
 // ...etter å ha kalkulert x posisjon for boksene, basert på antall bokser slik at de spres utover

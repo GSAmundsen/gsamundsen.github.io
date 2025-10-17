@@ -153,9 +153,9 @@ Functions use JavaScript code strings. here are the currently supported patterns
             - `name` (string, optional): Display name
             - `nodeId` (string, required): Unique node identifier
                 - Format: `"node_N"` where N is the number
-            - `parentPoolId` (string, optional): ID of containing pool
+            - `parentPoolId` (array, optional): IDs of containing pool
                 - If omitted then element can be placed anywhere
-            - `parentLaneId` (string, optional): ID of containing lane
+            - `parentLaneId` (array, optional): IDs of containing lane
                 - If omitted then element can be placed anywhere
             - `coordinates` (object, optional): Position on canvas if it starts deployed
                 - If omitted, element starts in menu

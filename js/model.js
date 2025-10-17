@@ -1,97 +1,39 @@
-// Datamodellen for spillet
-
 let model = {
 
-    game: { 
-        currentScenario: 0,    
+    // Raw JSON data
+    loadedScenarioData: null,
+
+    // Other static properties
+    staticProperties: {
+        canvasBackgroundColor: 'white',
     },
-
-    canvasProperties: {
-        width: 1000,
-        height: 700,
-        backgroundColor: 'white'
+    
+    // Information about the current game
+    game: {
+        currentScenario: null,
+        finishedScenarios: [],
+        numberOfScenarios: 0,
+        mainTitle: null,
+        moduleDescription: null,
+        sequential: null,
+        building: null,
+        canvasWidth: 0,
+        canvasHeight: 0,
     },
-
-    //levels of the scenario
-    ScenarioLevels: 
-    [{
-        scenarioID: 0,// ikke i bruk, enda
-        scenarioDescription: "This is the description of Scenario 1 \n and its tasks",
-        //boxes in the scenario
-        BoxesList: 
-        [
-            {   x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text:"Start"
-            },
-
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 120, h: 60,
-                color: "lightgrey", 
-                text: "Manual Check-in",
-            },
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text: "End",
-            },
-
-            //Neste "boks" i dette scenarioet her..
-        ],
-
-
-    }, 
-    {
-        scenarioID: 1,// ikke i bruk, enda
-           scenarioDescription: "This is the description of Scenario 2 \n and its tasks",
-           //boxes in the scenario
-           BoxesList: 
-           [
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text: "StartState",
-            },
-            {   x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 120, h: 60,
-                color: "lightgrey", 
-                text:"Auto. Check-in"
-            },
-
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 120, h: 60,
-                color: "lightgrey", 
-                text: "Manual Check-in",
-            },
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 120, h: 60,
-                color: "lightgrey", 
-                text: "Security Check",
-            },
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text: "EndState",
-            },
-
-               //Neste "boks" i dette scenarioet her..
-           ],
-
-           ScenarioSolution: [
-            //kanskje en liste av riktige tilknytninger mellom "Tasks", som kan brukes til å verifisere brukerens løsning
-           ]
-    },
-
-]
-
-
-
-
+    
+    // Information about the current scenario
+    currentScenario: {
+        scenarioTitle: null,
+        scenarioDescription: null,
+        tutorialImage: null,
+        failureImage: null,
+        pools: [],
+        lanes: [],
+        staticNodes: [],
+        staticConnectors: [],
+        dynamicNodesInMenu: [],
+        dynamicNodesOnCanvas: [],
+        dynamicConnectors: [],
+        tokens: [],
+    }
 }
