@@ -128,37 +128,133 @@ function drawArrow(fromX, fromY, toX, toY) {
   context.fill();
 }
 
+// GATEWAY-TEGNING I BPMN-STIL 
+// Disse funksjonene tegner diamantformede noder (gateways) i canvas.
+// Hver gateway-type får et unikt symbol inni diamanten (X, +, eller o).
+
+// Tegner selve diamantformen som gatewayene bygger på
+function drawDiamond(x, y, size, color = "#fff") {
+  context.beginPath();
+  context.moveTo(x, y - size / 2);         // topp-punkt
+  context.lineTo(x + size / 2, y);         // høyre-punkt
+  context.lineTo(x, y + size / 2);         // bunn-punkt
+  context.lineTo(x - size / 2, y);         // venstre-punkt
+  context.closePath();                     // lukker figuren
+  context.fillStyle = color;               // fyllfarge inni diamanten
+  context.fill();
+  context.strokeStyle = "black";           // svart kantlinje
+  context.lineWidth = 2;
+  context.stroke();
+}
+
+// Eksklusiv gateway (XOR) 
+// Brukes når bare én vei kan tas (enten/eller)
+function drawExclusiveGateway(x, y, size) {
+  drawDiamond(x, y, size, "#fff");         // tegn diamant
+  context.beginPath();
+  // Tegner en X inni diamanten
+  context.moveTo(x - size / 4, y - size / 4);
+  context.lineTo(x + size / 4, y + size / 4);
+  context.moveTo(x + size / 4, y - size / 4);
+  context.lineTo(x - size / 4, y + size / 4);
+  context.strokeStyle = "black";
+  context.lineWidth = 2;
+  context.stroke();
+}
+
+// Parallell gateway (AND) 
+// Brukes når flere flyter skal skje samtidig (alle grener kjøres)
+function drawParallelGateway(x, y, size) {
+  drawDiamond(x, y, size, "#fff");         // tegn diamant
+  context.beginPath();
+  // Tegner et pluss-tegn (+) inni diamanten
+  context.moveTo(x - size / 4, y);         // horisontal strek
+  context.lineTo(x + size / 4, y);
+  context.moveTo(x, y - size / 4);         // vertikal strek
+  context.lineTo(x, y + size / 4);
+  context.strokeStyle = "black";
+  context.lineWidth = 3;
+  context.stroke();
+}
+
+// Inklusiv gateway (OR)
+// Brukes når en eller flere flyter kan aktiveres samtidig
+function drawInclusiveGateway(x, y, size) {
+  drawDiamond(x, y, size, "#fff");         // tegn diamant
+  context.beginPath();
+  // Tegner en liten sirkel inni diamanten
+  context.arc(x, y, size / 5, 0, Math.PI * 2);
+  context.strokeStyle = "black";
+  context.lineWidth = 2;
+  context.stroke();
+}
+
 
 //Sletter canvas, og tegner opp alt på nytt. Kalles hovedsakelig når musen flyttes (mouseMove())
 function draw() {
+  // Tøm hele canvas før vi tegner alt på nytt
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Tegn alle koblinger først
-  if(Object.keys(connections).length != 0) //Om vi skal bruke "Dictionary" (Objekt, i javascript siden js ikke bruker dict.)
-  {
+  // Tegn alle koblinger (piler) mellom bokser først
+  // Dette sikrer at linjene havner "under" boksene
+  if (Object.keys(connections).length != 0) {
     for (let c of connections) {
       const from = boxes.find(b => b.nodeId === c.fromId);
       const to = boxes.find(b => b.nodeId === c.toId);
       if (from && to) {
-        drawArrow(from.x + from.w / 2, from.y + from.h / 2, to.x + to.w / 2, to.y + to.h / 2);
+        drawArrow(
+          from.x + from.w / 2,
+          from.y + from.h / 2,
+          to.x + to.w / 2,
+          to.y + to.h / 2
+        );
       }
     }
   }
 
-  // Tegn alle bokser oppå
+  // Tegn alle bokser og gateways oppå linjene
   for (let box of boxes) {
-    //Om vi har valg en boks, og denne boxen i for løkken har .nodeId lik boksen vi har valgt, sett custom farge definert i model. 
-    if(currentSelectedBox != null && currentSelectedBox.nodeId == box.nodeId){context.fillStyle = model.settings.selectedBoxColor;}
-    //Om ikke, sett custom standard farge definert i modellen. 
-    else{context.fillStyle = model.settings.standardBoxColor;}
-    context.fillRect(box.x, box.y, box.w, box.h);
+    const centerX = box.x + box.w / 2;
+    const centerY = box.y + box.h / 2;
+
+    // Sjekk hvilken farge boksen skal ha (markert eller standard) 
+    if (currentSelectedBox != null && currentSelectedBox.nodeId == box.nodeId) {
+      context.fillStyle = model.settings.selectedBoxColor;
+    } else {
+      context.fillStyle = model.settings.standardBoxColor;
+    }
+
+    // Tegn gateway basert på type 
+    if (box.type === "gateway_exc") {
+      drawExclusiveGateway(centerX, centerY, 60); // Eksklusiv (X)
+    } else if (box.type === "gateway_para") {
+      drawParallelGateway(centerX, centerY, 60);  // Parallell (+)
+    } else if (box.type === "gateway_inc") {
+      drawInclusiveGateway(centerX, centerY, 60); // Inklusiv (O)
+    } else {
+      // Vanlig rektangulær boks (Task, Start, End, etc.)
+      context.fillRect(box.x, box.y, box.w, box.h);
+      context.strokeStyle = "black";
+      context.strokeRect(box.x, box.y, box.w, box.h);
+    }
+
+    // Tegn tekst på boksen eller rett under gateway 
     context.fillStyle = "black";
     context.font = "14px Arial";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillText(box.text, box.x + box.w / 2, box.y + box.h / 2);
+
+    if (box.type?.startsWith("gateway")) {
+      // Plasser teksten litt under gateway-symbolene
+      context.fillText(box.text, centerX, centerY + box.h / 2 + 15);
+    } else {
+      // Plasser teksten midt inni vanlige bokser
+      context.fillText(box.text, box.x + box.w / 2, box.y + box.h / 2);
+    }
   }
 }
+
+
 
 
 
@@ -190,10 +286,6 @@ function resetConnections(resetAll = false) {
   //Tegner alt på nytt, siden vi har endrer listene
   draw();
 }
-
-
-
-
 
 
 // Når brukeren trykker ned musen
