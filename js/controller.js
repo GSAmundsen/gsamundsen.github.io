@@ -25,7 +25,7 @@ async function initCanvas()
     console.log(canvas);
 
     //Laster inn all data, så kaller draw();
-    const scenario = findScenario
+    const scenario = findScenario();
     loadScenario(scenario);
 }
 
@@ -71,10 +71,13 @@ function findScenario(){
 
 // Loads specific scenario into model.currentScenario
 function loadScenario(scenario){
+  // sends player to final screen
   if (scenario === 0) {
-    // send player to after game screen
+    showLinkToQuiz();
+    return;
   }
-  // preserves old scenario data if scenarios are building and wipes currentScanrio clean
+
+  // preserves old scenario data if scenarios are building and wipes currentScenario clean
   if (model.game.building === true) {
     const lastScenario = model.currentScenario
   }
@@ -91,47 +94,41 @@ function loadScenario(scenario){
 
   const tokens = scenarioData.tokens
   for (let token of tokens) {
-    const tokenInstance = new Token(token);
-    model.currentScenario.tokens.push(tokenInstance);
+    model.currentScenario.tokens.push(token);
   }
 
   const pools = scenarioData.static.pools
   for (let pool of pools) {
-    const poolInstance = new Pool(pool);
-    model.currentScenario.pools.push(poolInstance);
+    model.currentScenario.pools.push(pool);
   }
 
   const lanes = scenarioData.static.lanes
   for (let lane of lanes) {
-    const laneInstance = new Lane(lane);
-    model.currentScenario.lanes.push(laneInstance);
+    model.currentScenario.lanes.push(lane);
   }
 
   const nodes = scenarioData.static.nodes
   for (let node of nodes) {
-    const nodeInstance = new Node(node);
-    model.currentScenario.staticNodes.push(nodeInstance);
+    node.static = true;
+    model.currentScenario.staticNodes.push(node);
   }
 
   const connectors = scenarioData.static.connectors
   for (let connector of connectors) {
-    const connectorInstance = new Connector(connector);
-    model.currentScenario.staticConnectors.push(connectorInstance);
+    connector.static = true;
+    model.currentScenario.staticConnectors.push(connector);
   }
 
+  // Current 2: will probalby need width and height attr
   const dynamicNodes = scenarioData.dynamic
   for (let node of dynamicNodes) {
-    const nodeInstance = new Node(node);
-    model.currentScenario.dynamicNodesInMenu.push(nodeInstance);
+    node.static = false;
+    model.currentScenario.dynamicNodesInMenu.push(node);
   }
     
-  
-  //Scenario data fra JSON må lastes inn her.
+  // Current 1: Needs logic for when scenarios are building.
 
 
-    //Om scenariodata fra JSON IKKE skal lastes inn i modellen, må det endres HVOR systemet henter data fra.
-    //Jeg tenker at aller helst bør man ha en mellomlagring, som enten tar inn JSON data, eller henter fra modellen. 
-    //Så kan systemet bruke denne mellomlagringen som "kilde" for å hente data til view og controller.
 
     //Henter info fra modellen, og oppdaterer view. Her henter den teksten for det nåværende scenarioet
     document.getElementById('scenarioTextHeader').innerText = model.ScenarioLevels[model.game.currentScenario].scenarioDescription;
@@ -256,24 +253,10 @@ function mouseLeave(e) {
 //Midlertidig, løsning, trykk "n" for å gå til neste scenario
 document.addEventListener('keydown', (event) => {
     if (event.key === "n") {
-        nextScenario();
+      const scenario = findScenario();
+      loadScenario(scenario);
     }});
 
-
-//Laster neste scenario
-function nextScenario(){
-    if(model.game.currentScenario < model.ScenarioLevels.length-1){
-        model.game.currentScenario += 1;
-        boxes = processBoxes(); //henter nye bokser fra the nye scenariet.
-        loadScenario(); //oppdaterer teksten i view
-        draw(); //tegner opp alt på nytt, siden nytt scenario er hentet
-    } else {
-        //Om det ikke er flere scenario, lag en alert box
-        //alert("Ikke flere scenarioer!");
-        showLinkToQuiz();
-        
-    }
-}
 
 //Viser link til quiz, etter siste scenario
 function showLinkToQuiz(){
