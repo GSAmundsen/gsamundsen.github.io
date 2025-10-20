@@ -2,8 +2,8 @@
 
 let model = {
     settings:{
-        selectedBoxColor: 'rgba(171, 224, 224, 0.91)',
-        standardBoxColor: 'rgba(221, 212, 212, 0.91)'
+        selectedBoxColor: 'rgba(171, 224, 224, 0.70)',
+        standardBoxColor: 'rgba(255, 255, 255, 1)'
     },
 
     game: { 
@@ -32,7 +32,8 @@ let model = {
             {   x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
                 w: 60, h: 60,
                 color: "lightgrey", 
-                text:"Start"
+                text:"Start",
+                type: "task"
             },
 
             {
@@ -40,6 +41,7 @@ let model = {
                 w: 120, h: 60,
                 color: "lightgrey", 
                 text: "Manual Check-in",
+                type: "task"
             },
 
             {
@@ -47,6 +49,7 @@ let model = {
                 w: 120, h: 60,
                 color: "lightgrey", 
                 text: "Baggage drop",
+                type: "task"
             },
 
             {
@@ -54,6 +57,28 @@ let model = {
                 w: 60, h: 60,
                 color: "lightgrey", 
                 text: "End",
+                type: "task"
+            },
+            {
+                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
+                w: 60, h: 60,
+                color: "lightgrey", 
+                text: "",
+                type: "gateway_para"
+            },
+            {
+                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
+                w: 60, h: 60,
+                color: "lightgrey", 
+                text: "",
+                type: "gateway_inc"
+            },
+            {
+                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
+                w: 60, h: 60,
+                color: "lightgrey", 
+                text: "",
+                type: "gateway_exc"
             },
 
             //Neste "boks" i dette scenarioet her..
@@ -91,6 +116,7 @@ let model = {
                 w: 60, h: 60,
                 color: "lightgrey", 
                 text: "StartState",
+                type: "task"
             },
             {   x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
                 w: 120, h: 60,

@@ -150,7 +150,7 @@ function drawDiamond(x, y, size, color = "#fff") {
 // Eksklusiv gateway (XOR) 
 // Brukes når bare én vei kan tas (enten/eller)
 function drawExclusiveGateway(x, y, size) {
-  drawDiamond(x, y, size, "#fff");         // tegn diamant
+  drawDiamond(x, y, size,  context.fillStyle);         // tegn diamant
   context.beginPath();
   // Tegner en X inni diamanten
   context.moveTo(x - size / 4, y - size / 4);
@@ -165,7 +165,7 @@ function drawExclusiveGateway(x, y, size) {
 // Parallell gateway (AND) 
 // Brukes når flere flyter skal skje samtidig (alle grener kjøres)
 function drawParallelGateway(x, y, size) {
-  drawDiamond(x, y, size, "#fff");         // tegn diamant
+  drawDiamond(x, y, size, context.fillStyle);         // tegn diamant +// Uses the current fillstyle. Selected or normal color
   context.beginPath();
   // Tegner et pluss-tegn (+) inni diamanten
   context.moveTo(x - size / 4, y);         // horisontal strek
@@ -180,7 +180,7 @@ function drawParallelGateway(x, y, size) {
 // Inklusiv gateway (OR)
 // Brukes når en eller flere flyter kan aktiveres samtidig
 function drawInclusiveGateway(x, y, size) {
-  drawDiamond(x, y, size, "#fff");         // tegn diamant
+  drawDiamond(x, y, size,  context.fillStyle);         // tegn diamant
   context.beginPath();
   // Tegner en liten sirkel inni diamanten
   context.arc(x, y, size / 5, 0, Math.PI * 2);
@@ -224,7 +224,7 @@ function draw() {
       context.fillStyle = model.settings.standardBoxColor;
     }
 
-    // Tegn gateway basert på type 
+    // Tegn gateway basert på type
     if (box.type === "gateway_exc") {
       drawExclusiveGateway(centerX, centerY, 60); // Eksklusiv (X)
     } else if (box.type === "gateway_para") {
