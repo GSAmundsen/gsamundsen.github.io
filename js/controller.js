@@ -2,6 +2,11 @@
 let canvas = null;
 let context = null;
 let boxes = [];
+let lanes = [];
+//Globale variabler som brukes til å holde styr på hvilken boks som dras, og offset for å få riktig posisjon
+let draggingBox = null;
+let offsetX = 0;
+let offsetY = 0;
 //mellomlagrer brukerens løsning. I denne foreløpige løsningen, lagres KUN transitions mellom bokser.
 let currentUserSolution = [["start","task1"],["start", "task2"],["task2","task1"],["task1","end"]]; 
 // === Globale variabler for koblinger ===
@@ -52,7 +57,7 @@ function loadScenario(){
 
     // Henter bokser fra modellen...
     boxes = processBoxes(); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
-
+    lanes = processLanes();
     //Setter Passasjer description, er egen funksjon fordi den endres ved verifisering. 
     setTaskDescription();
 
@@ -101,99 +106,34 @@ function processBoxes(){
     return boxes;
 } 
 
-//Globale variabler som brukes til å holde styr på hvilken boks som dras, og offset for å få riktig posisjon
-let draggingBox = null;
-let offsetX = 0;
-let offsetY = 0;
+// Calculates the lane heigh and y position, by the number of lanes in the scenario.
+function processLanes(){
+    let lanes = model.ScenarioLevels[model.game.currentScenario].LanesList; 
+    let laneHeight = canvas.height / lanes.length;
 
-function drawArrow(fromX, fromY, toX, toY) {
-  const headlen = 10;
-  const dx = toX - fromX;
-  const dy = toY - fromY;
-  const angle = Math.atan2(dy, dx);
-  context.beginPath();
-  context.moveTo(fromX, fromY);
-  context.lineTo(toX, toY);
-  context.strokeStyle = "blue";
-  context.lineWidth = 2;
-  context.stroke();
+    for (let i = 0; i < lanes.length; i++) {
+        // Sett x og y posisjon
+        lanes[i].x = canvas.width * 0.05; //Lanes should start at 5% of the canvas width
+        lanes[i].y = laneHeight * i; //increases .y position, to stack lanes on top of eachother
+        lanes[i].w = canvas.width * 0.95 // Widht of the lane is 5% shorter than the canvas. Padding.
+        lanes[i].h = laneHeight; // sets the heigh of the lane
+    } 
+    console.log("Lanes processed: ", lanes);
+    return lanes;
+} 
 
-  // Tegn pilspiss
-  context.beginPath();
-  context.moveTo(toX, toY);
-  context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-  context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
-  context.closePath();
-  context.fillStyle = "blue";
-  context.fill();
-}
 
-// GATEWAY-TEGNING I BPMN-STIL 
-// Disse funksjonene tegner diamantformede noder (gateways) i canvas.
-// Hver gateway-type får et unikt symbol inni diamanten (X, +, eller o).
 
-// Tegner selve diamantformen som gatewayene bygger på
-function drawDiamond(x, y, size, color = "#fff") {
-  context.beginPath();
-  context.moveTo(x, y - size / 2);         // topp-punkt
-  context.lineTo(x + size / 2, y);         // høyre-punkt
-  context.lineTo(x, y + size / 2);         // bunn-punkt
-  context.lineTo(x - size / 2, y);         // venstre-punkt
-  context.closePath();                     // lukker figuren
-  context.fillStyle = color;               // fyllfarge inni diamanten
-  context.fill();
-  context.strokeStyle = "black";           // svart kantlinje
-  context.lineWidth = 2;
-  context.stroke();
-}
 
-// Eksklusiv gateway (XOR) 
-// Brukes når bare én vei kan tas (enten/eller)
-function drawExclusiveGateway(x, y, size) {
-  drawDiamond(x, y, size,  context.fillStyle);         // tegn diamant
-  context.beginPath();
-  // Tegner en X inni diamanten
-  context.moveTo(x - size / 4, y - size / 4);
-  context.lineTo(x + size / 4, y + size / 4);
-  context.moveTo(x + size / 4, y - size / 4);
-  context.lineTo(x - size / 4, y + size / 4);
-  context.strokeStyle = "black";
-  context.lineWidth = 2;
-  context.stroke();
-}
-
-// Parallell gateway (AND) 
-// Brukes når flere flyter skal skje samtidig (alle grener kjøres)
-function drawParallelGateway(x, y, size) {
-  drawDiamond(x, y, size, context.fillStyle);         // tegn diamant +// Uses the current fillstyle. Selected or normal color
-  context.beginPath();
-  // Tegner et pluss-tegn (+) inni diamanten
-  context.moveTo(x - size / 4, y);         // horisontal strek
-  context.lineTo(x + size / 4, y);
-  context.moveTo(x, y - size / 4);         // vertikal strek
-  context.lineTo(x, y + size / 4);
-  context.strokeStyle = "black";
-  context.lineWidth = 3;
-  context.stroke();
-}
-
-// Inklusiv gateway (OR)
-// Brukes når en eller flere flyter kan aktiveres samtidig
-function drawInclusiveGateway(x, y, size) {
-  drawDiamond(x, y, size,  context.fillStyle);         // tegn diamant
-  context.beginPath();
-  // Tegner en liten sirkel inni diamanten
-  context.arc(x, y, size / 5, 0, Math.PI * 2);
-  context.strokeStyle = "black";
-  context.lineWidth = 2;
-  context.stroke();
-}
 
 
 //Sletter canvas, og tegner opp alt på nytt. Kalles hovedsakelig når musen flyttes (mouseMove())
 function draw() {
-  // Tøm hele canvas før vi tegner alt på nytt
+  // clear the canvas every update, prevents "drawing" when dragging
   context.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawLanes(lanes); // Passing the processed list of lanes as an argument to the drawLanes function
+
 
   // Tegn alle koblinger (piler) mellom bokser først
   // Dette sikrer at linjene havner "under" boksene
@@ -211,6 +151,7 @@ function draw() {
       }
     }
   }
+
 
   // Tegn alle bokser og gateways oppå linjene
   for (let box of boxes) {
@@ -244,7 +185,10 @@ function draw() {
     context.textAlign = "center";
     context.textBaseline = "middle";
 
-    if (box.type?.startsWith("gateway")) {
+    //Kaster inn en liten text på Pool her, endre denne. 
+    context.fillText(model.ScenarioLevels[model.game.currentScenario].PoolTitle, 35, canvas.height/2)
+
+    if (box.type.startsWith("gateway")) {
       // Plasser teksten litt under gateway-symbolene
       context.fillText(box.text, centerX, centerY + box.h / 2 + 15);
     } else {

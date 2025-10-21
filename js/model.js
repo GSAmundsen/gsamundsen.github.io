@@ -3,7 +3,8 @@
 let model = {
     settings:{
         selectedBoxColor: 'rgba(171, 224, 224, 0.70)',
-        standardBoxColor: 'rgba(255, 255, 255, 1)'
+        standardBoxColor: 'rgba(255, 255, 255, 1)',
+        laneBorderColor: 'rgba(99, 99, 99, 1)'
     },
 
     game: { 
@@ -82,6 +83,30 @@ let model = {
             },
 
             //Neste "boks" i dette scenarioet her..
+        ],
+
+        PoolTitle: "Pool title", // Only using 1 pool for this project.. or else this would be another object. 
+        
+        //Lane sizes and positions are determined automatically (by how many Lanes the scenario has)
+        LanesList:
+        [
+            {
+                x:0, y:0, w:0, h:0,
+                title:"this is the title of the Lane",
+                borderColor: "lightgrey"
+            },
+            {
+                x:0, y:0, w:0, h:0,
+                title:"this is the title of the Lane",
+                borderColor: "lightgrey"
+            },
+            
+            {
+                x:0, y:0, w:0, h:0,
+                title:"this is the title of the Lane",
+                borderColor: "lightgrey"
+            },
+
         ],
         ScenarioPassengerTypes: //This needs to match the ScenarioSolution
         [
