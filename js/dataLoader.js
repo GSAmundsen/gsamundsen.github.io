@@ -1,5 +1,5 @@
-// Will be file for loading JSON objects
 
+// Loads in JSON file
 async function loadScenarioJSON(filepath) {
     try {
         console.log('Fetching file:', filepath);
@@ -12,7 +12,7 @@ async function loadScenarioJSON(filepath) {
         const jsonData = await response.json();
 
         console.log('JSON parsed successfully!');
-        // Later add verification? Eller er det bare pynt.
+        // Future 1: Add verificaiton
         return jsonData
 
     } catch(error) {

@@ -171,7 +171,7 @@
       },
       "dynamic": [
         {
-          "type": "xor",
+          "type": "xorGateway",
           "name": "Check Check-in",
           "nodeId": "node_3",
           "parentPoolId": ["pool_1"],
@@ -199,7 +199,7 @@
           "amount": 1
         },
         {
-          "type": "xor",
+          "type": "xorGateway",
           "name": "Check Luggage",
           "nodeId": "node_5",
           "parentPoolId": ["pool_1"],
@@ -259,7 +259,7 @@
           "amount": 1
         },
         {
-          "type": "and",
+          "type": "andGateway",
           "name": "",
           "nodeId": "node_10",
           "parentPoolId": ["pool_1"],
@@ -286,7 +286,7 @@
           "amount": 1
         },
         {
-          "type": "incomingAnd",
+          "type": "incomingAndGateway",
           "name": "",
           "nodeId": "node_13",
           "parentPoolId": ["pool_1"],

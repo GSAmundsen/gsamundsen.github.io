@@ -1,32 +1,46 @@
 //Globale vars
 let canvas = null;
 let context = null;
-let boxes = [];
+//Globale variabler som brukes til å holde styr på hvilken boks som dras, og offset for å få riktig posisjon
+let draggingBox = null;
+let offsetX = 0;
+let offsetY = 0;
+//mellomlagrer brukerens løsning. I denne foreløpige løsningen, lagres KUN transitions mellom bokser.
+let currentUserSolution = [["start","task1"],["start", "task2"],["task2","task1"],["task1","end"]]; 
+// === Globale variabler for koblinger ===
+let connections = []; // {fromId: "node_1", toId: "node_3"}
+let connecting = false;
+let startNode = null;
+let tempLineEnd = { x: 0, y: 0 };
+
+let testResults = []; //List of strings, PASS or FAIL. Index needs to match the corresponding entry in ScenarioPassengerTypes and ScenarioSolutions
+let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket på, slik at vi kan hente ut nodeID, som kan brukes til å slette tilkn.
+
+
 
 async function initCanvas() 
 {
-    const scenarioData = await loadScenarioJSON('scenarioData/scenario.json')
+  // Loads game data
+  const scenarioData = await loadScenarioJSON('scenarioData/scenario.json')
+  model.loadedScenarioData = scenarioData;
+  loadGameData();
 
-    model.loadedScenarioData = scenarioData;
-    loadGameData();
+  // Prepares canvas element
+  canvas = document.getElementById('BPMNcanvas');
+  context = canvas.getContext('2d');
+  context.canvas.width = model.game.canvasWidth;
+  context.canvas.height = model.game.canvasHeight;
+  context.fillStyle = model.staticProperties.canvasBackgroundColor;
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
 
-  //Henter canvas elementet, laget i view.js, og setter bredde, høyde og farge
-    canvas = document.getElementById('BPMNcanvas');
-    context = canvas.getContext('2d');
-    context.canvas.width = model.game.canvasWidth;
-    context.canvas.height = model.game.canvasHeight;
-    context.fillStyle = model.staticProperties.canvasBackgroundColor;
-    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+  // Adds canvas and document listeners
+  canvas.addEventListener('mousedown', mouseDown);
+  canvas.addEventListener('mousemove', mouseMove);
+  canvas.addEventListener('mouseup', mouseUp); 
+  document.addEventListener('keydown', handleKeyPress);
 
-    // Legger til listeners, slik at funksjoner blir kalt ved musehendelser ('intern event systemet henter', funksjonen som skal kalles)
-    canvas.addEventListener('mousedown', mouseDown);
-    canvas.addEventListener('mousemove', mouseMove);
-    canvas.addEventListener('mouseup', mouseUp); 
-    console.log(canvas);
-
-    //Laster inn all data, så kaller draw();
-    const scenario = findScenario();
-    loadScenario(scenario);
+  // Loads and deploys scenario data
+  newScenario();
 }
 
 // Loads objects from loadedScenarioData into model.game
@@ -41,6 +55,125 @@ function loadGameData(){
   model.game.canvasHeight = gameData.canvasSize.height
 }
 
+// Når brukeren trykker ned musen
+function mouseDown(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  
+  currentSelectedBox = null; //Om vi trykker andre steder enn på en boks, så nullstill slik at vi ikke har en boks valgt.
+  const allNodes = getNodes()
+  // Høyreklikk: start å tegne en pil
+  if (e.button === 2) {
+    for (let i = allNodes.length - 1; i >= 0; i--) {
+      const node = allNodes[i];
+      if (
+        mouseX > node.coordinates.x && mouseX < node.coordinates.x + node.width &&
+        mouseY > node.coordinates.y && mouseY < node.coordinates.y + node.height
+      ) {
+        connecting = true;
+        startNode = node;
+        tempLineEnd = { x: mouseX, y: mouseY };
+        return;
+      }
+    }
+  } else {
+    // Venstreklikk: dra boksen
+    for (let node of allNodes) {
+      if (
+        node.static !== true && mouseX > node.coordinates.x && mouseX < node.coordinates.x + node.width &&
+        mouseY > node.coordinates.y && mouseY < node.coordinates.y + node.height
+      ) {
+        draggingBox = node;
+        currentSelectedBox = node; //Lagrer den siste boksen vi trykket på.
+        offsetX = mouseX - node.coordinates.x;
+        offsetY = mouseY - node.coordinates.y;
+
+        break;
+      }
+    }
+  }
+  draw(); // Må ha en draw call her for å kunne endre farge kun ved "klikk" og ikke bare "drag".
+}
+
+// Når musen beveges
+function mouseMove(e) {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  // Hvis vi tegner en pil
+  if (connecting && startNode) {
+    tempLineEnd = { x: mouseX, y: mouseY };
+    draw();
+    return;
+  }
+
+  // Vanlig flytting av bokser
+  if (!draggingBox) return;
+  draggingBox.coordinates.x = mouseX - offsetX;
+  draggingBox.coordinates.y = mouseY - offsetY;
+  draw();
+}
+
+// Når musen slippes
+function mouseUp(e) {
+  if (connecting && startNode) {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const allNodes = getNodes()
+    const allConnectors = getConnectors()
+    for (let node of allNodes) {
+      if (
+        mouseX > node.coordinates.x && mouseX < node.coordinates.x + node.width &&
+        mouseY > node.coordinates.y && mouseY < node.coordinates.y + node.height &&      
+        node !== startNode
+      ) {
+        // Future 2: only works if resetConnections fixes sequentiallity of connectors upon deletion...
+        const connector_id = `connector_${allConnectors.length}`
+
+        // Future 1: Currently hardcoded type selection, will need to be changed once we implement more connector types
+        const newConn = { type: 'sequenceFlow', connectorId: connector_id, fromId: startNode.nodeId, toId: node.nodeId };
+
+        // Sjekk om koblingen finnes fra før, +sjekker at koblingen ikke matcher "bakover"
+        if (!allConnectors.some(c => (c.fromId === newConn.fromId && c.toId === newConn.toId) || (c.fromId === newConn.toId && c.toId === newConn.fromId))) {
+          model.currentScenario.dynamicConnectors.push(newConn);
+        }
+      }
+    }
+    connecting = false;
+    startNode = null;
+    draw();
+  }
+  draggingBox = null;
+}
+
+function mouseLeave(e) {
+  draggingBox = null;
+};
+
+function handleKeyPress(event) {
+    if(event.key == "n") {
+      // Current 1: should be replaced with a "Next Scenario" button that comes up after soultion is verified
+        nextScenario();
+    }
+    if(event.key == 'Delete'){
+      resetConnections();
+    }
+}
+
+// Comes from initCanvas or "n" and deploys scenario
+function newScenario(){
+  const scenario = findScenario();
+  loadScenario(scenario);
+  if (scenario !== 0) {
+    deployScenario();
+  }
+}
+
+// Finds the current scenario to run using model.finishedScenarios and model.numberOfScenarios
 function findScenario(){
   // If there is a current scenario it is marked as finished
   if (model.game.currentScenario !== null) {
@@ -71,20 +204,21 @@ function findScenario(){
 
 // Loads specific scenario into model.currentScenario
 function loadScenario(scenario){
-  // sends player to final screen
+  // Future 1: the final screen should also be an optional inload via JSON
+  // If game is over sends player to final screen
   if (scenario === 0) {
-    showLinkToQuiz();
+    endScreen();
     return;
   }
 
-  // preserves old scenario data if scenarios are building and wipes currentScenario clean
+  // Preserves old scenario data if scenarios are building then wipes currentScenario clean
   if (model.game.building === true) {
     const lastScenario = model.currentScenario
   }
   resetCurrentScenario();
 
 
-  // loads in new scenario data
+  // Loads in new scenario data
   const scenarioData = model.loadedScenarioData.scenarios[scenario];
 
   model.currentScenario.scenarioTitle = scenarioData.scenarioTitle
@@ -110,6 +244,8 @@ function loadScenario(scenario){
   const nodes = scenarioData.static.nodes
   for (let node of nodes) {
     node.static = true;
+    node.width = getNodeWidth(node);
+    node.height = 60;
     model.currentScenario.staticNodes.push(node);
   }
 
@@ -119,28 +255,29 @@ function loadScenario(scenario){
     model.currentScenario.staticConnectors.push(connector);
   }
 
-  // Current 2: will probalby need width and height attr
   const dynamicNodes = scenarioData.dynamic
   for (let node of dynamicNodes) {
     node.static = false;
+    node.width = getNodeWidth(node);
+    node.height = 60;
     model.currentScenario.dynamicNodesInMenu.push(node);
   }
-    
-  // Current 1: Needs logic for when scenarios are building.
-
-
-
-    //Henter info fra modellen, og oppdaterer view. Her henter den teksten for det nåværende scenarioet
-    document.getElementById('scenarioTextHeader').innerText = model.ScenarioLevels[model.game.currentScenario].scenarioDescription;
-
-    // Henter bokser fra modellen...
-    boxes = processBoxes(); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
-
-
-    //Når alt er lastet, tegn opp alt.
-    draw()
+  // Current 3:  if building=true: need a section to load in already used nodes and connectors
 }
 
+// Loads up end screen
+function endScreen(){
+    //Viser en alert box med link til quiz
+    document.getElementById('scenarioTextHeader').innerHTML = /*html*/`
+    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">All scenarios completed. Click here to take the quiz.</a>
+    
+    
+  
+    
+    `; 
+}
+
+// Used to reset model.currentScenario
 function resetCurrentScenario() {
     model.currentScenario = {
         scenarioTitle: null,
@@ -158,115 +295,58 @@ function resetCurrentScenario() {
     };
 }
 
-
-// ...etter å ha kalkulert x posisjon for boksene, basert på antall bokser slik at de spres utover
-function processBoxes(){
-    //Vi bruker "currentScenario" som en "level teller". Scenario 0 referer da til både første scenario, og index 0 i listen av scenarioer
-    let boxes = model.ScenarioLevels[model.game.currentScenario].BoxesList; 
-    let nextXpos = 0;
-    for (let i = 0; i < boxes.length; i++) {
-        //Bruker bredden på forrige boks (om denne boksen ikke er index 0), for å regne ut neste x posisjon, pluss litt padding, sprer boksene
-        (i == 0) ? nextXpos +=20 : nextXpos += boxes[i-1].w+20; //Forenklet if statement, "om i er 0, så legg til 20, ellers legg til bredden på forrige boks + 20px"
-        boxes[i].x = nextXpos 
-        } 
-        console.log("Boxes processed: ", boxes);
-    return boxes;
-}
-
-//Globale variabler som brukes til å holde styr på hvilken boks som dras, og offset for å få riktig posisjon
-let draggingBox = null;
-let offsetX = 0;
-let offsetY = 0;
-
-//Sletter canvas, og tegner opp alt på nytt. Kalles hovedsakelig når musen flyttes (mouseMove())
-function draw() {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    //Går gjennom alle boksene i array, og tegner dem
-    for (let box of boxes) {
-        // Tegner boksen først
-        console.log("Drawing box at "+box.x+","+box.y);
-        context.fillStyle = box.color;
-        context.fillRect(box.x, box.y, box.w, box.h);
-        
-        //..så teksten, ellers havner teksten under boksen, kanskje legge dette i CSS?
-        context.fillStyle = "black";
-        context.font = "14px Arial";  
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(box.text, box.x + box.w / 2, box.y + box.h / 2); //Teksten i midten av boksen
+// Future x: widths and heigths can be determined in "aboutScenarios" in JSON input
+// Sets node width
+function getNodeWidth(node) {
+  if (node.type !== 'activity') {
+    return 60
   }
+
+  // Returns either a minimum width or text width + 5 px maring on each side
+  context.font = "14px Arial";
+  const textWidth = context.measureText(node.name).width;
+  const minWidth = 60;
+  return Math.max(minWidth, textWidth + 10);
 }
 
-//Når brukeren trykker ned musen...
-function mouseDown(e) {
-    const rect = canvas.getBoundingClientRect(); //Finner posisjon av canvas i forhold til vinduet
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    console.log(rect);
-    
+// Sets up the scenario on canvas
+function deployScenario() {
+  // Update Scenario Description
+  document.getElementById('scenarioTextHeader').innerText = model.currentScenario.scenarioDescription;
+  // Current 4: here is where we maybe add tutorialImage?
+  draw()
+}
 
-  // Sjekker om brukeren klikker "innenfor" en boks, kanskje det finns en bedre måte?
-    for (let i = boxes.length - 1; i >= 0; i--) {
-      const b = boxes[i];
-      if (
-            mouseX > b.x &&
-            mouseX < b.x + b.w &&
-            mouseY > b.y &&
-            mouseY < b.y + b.h
-        ) 
+function setTaskDescription(results = [])
+{
+  let tokenTypes = mod
+  let passengerTypes = model.ScenarioLevels[model.game.currentScenario].ScenarioPassengerTypes;
+  let textObject = document.getElementById('taskText');
+  textObject.innerHTML = "";
+
+  for(let i = 0; i < passengerTypes.length; i++)
       {
-        //Nå riktig boks, i listen av alle boksene i dette scenarioet er funnet, settes dette "draggingBox"
-        draggingBox = b;
-        console.log("Started dragging box: ", b);
-        //får riktig posisjon på boksen i forhold til musen, sånn at musen holder seg der man trykket, og ikke på 0,0 ift boks (kosmetisk)
-        offsetX = mouseX - b.x;
-        offsetY = mouseY - b.y;
-        break;
+        //Om vi har resultater som skal legges til hver linje i PassengerTypes, så legg dette til i HTML koden..
+        (results.length != 0) ? textObject.innerHTML += 
+        //.. Passasjertype beskrivelsen + resultatet. Om resultatet i listen er PASS, skal teksten være grønn, om ikke, så Rød. <br> er linebreak.
+        `${passengerTypes[i]} - ${(results[i] == "PASS") ? "<span style='color: green;'>PASS</span>" : "<span style='color: red;'>FAIL</span>"} </span> <br>` 
+        : textObject.innerHTML += `${passengerTypes[i]} <br>`;
+        console.log(results);
       }
-  }
-};
-
-//Hver gang musen flyttes, og en boks er "dragging", oppdateres posisjonen til boksen
-function mouseMove(e) {
-  if (!draggingBox) return;// om ingen boks skal dras, gjør ingenting
-  
-  const rect = canvas.getBoundingClientRect();  //igjen, posisjon av canvas ift vindu
-  const mouseX = e.clientX - rect.left;
-  const mouseY = e.clientY - rect.top;
-
-  draggingBox.x = mouseX - offsetX;
-  draggingBox.y = mouseY - offsetY;
-
-  draw(); //Tegn opp alt på nytt, for hver pixl musen flyttes
-};
-
-//Disse to kansellerer dragging når musen slippes eller utenfor canvas
-function mouseUp(e) {
-  draggingBox = null;
-};
-
-function mouseLeave(e) {
-  draggingBox = null;
-};
-
-
-//Midlertidig, løsning, trykk "n" for å gå til neste scenario
-document.addEventListener('keydown', (event) => {
-    if (event.key === "n") {
-      const scenario = findScenario();
-      loadScenario(scenario);
-    }});
-
-
-//Viser link til quiz, etter siste scenario
-function showLinkToQuiz(){
-    //Viser en alert box med link til quiz
-    document.getElementById('scenarioTextHeader').innerHTML = /*html*/`
-    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">All scenarios completed. Click here to take the quiz.</a>
-    
-    
-  
-    
-    `; 
 }
 
+// Called upon scenario initaition and mouse movement. Deletes the whole canvas and then redraws it.
+function draw() {
+  // clear the canvas every update, prevents "drawing" when dragging
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw order to create correct visual
+  drawPools(model.currentScenario.pools);
+  drawLanes(model.currentScenario.lanes);
+  connectorCoordinates(model.currentScenario.staticConnectors);
+  connectorCoordinates(model.currentScenario.dynamicConnectors);
+  drawNodes(model.currentScenario.staticNodes);
+  drawNodes(model.currentScenario.dynamicNodesInMenu);
+  drawNodes(model.currentScenario.dynamicNodesOnCanvas);
+  drawTemporaryArrow();
+}

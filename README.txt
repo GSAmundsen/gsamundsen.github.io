@@ -73,6 +73,7 @@ Functions use JavaScript code strings. here are the currently supported patterns
     - Each scenario object contains:
         - `scenarioId` (string, required): Unique identifier
             - Format: `"scenario_N"` where N is the number
+            - Must start from scenario_1
         - `scenarioTitle` (string, required): Display name
         - `scenarioDescription` (string, required): Description of overall scenario
         - `tutorialImage` (string, optional): Path to help image
@@ -150,6 +151,7 @@ Functions use JavaScript code strings. here are the currently supported patterns
     - `dynamic` (array, required): Elements player can put on map
         - Each dynamic element is an object with:
             - `type` (string, required): Type description
+                - Currently supported: activity, startEvent, xorGateway, andGateway, incomingAndGateway, endEvent
             - `name` (string, optional): Display name
             - `nodeId` (string, required): Unique node identifier
                 - Format: `"node_N"` where N is the number
