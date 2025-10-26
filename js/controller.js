@@ -36,7 +36,8 @@ async function initCanvas()
   // Adds canvas and document listeners
   canvas.addEventListener('mousedown', mouseDown);
   canvas.addEventListener('mousemove', mouseMove);
-  canvas.addEventListener('mouseup', mouseUp); 
+  canvas.addEventListener('mouseup', mouseUp);
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener('keydown', handleKeyPress);
 
   // Loads and deploys scenario data
@@ -135,10 +136,10 @@ function mouseUp(e) {
         const connector_id = `connector_${allConnectors.length}`
 
         // Future 1: Currently hardcoded type selection, will need to be changed once we implement more connector types
-        const newConn = { type: 'sequenceFlow', connectorId: connector_id, fromId: startNode.nodeId, toId: node.nodeId };
+        const newConn = { type: 'sequenceFlow', connectorId: connector_id, fromNodeId: startNode.nodeId, toNodeId: node.nodeId };
 
         // Sjekk om koblingen finnes fra før, +sjekker at koblingen ikke matcher "bakover"
-        if (!allConnectors.some(c => (c.fromId === newConn.fromId && c.toId === newConn.toId) || (c.fromId === newConn.toId && c.toId === newConn.fromId))) {
+        if (!allConnectors.some(c => (c.fromId === newConn.fromNodeId && c.toId === newConn.toNodeId) || (c.fromId === newConn.toNodeId && c.toId === newConn.fromNodeId))) {
           model.currentScenario.dynamicConnectors.push(newConn);
         }
       }
@@ -157,15 +158,45 @@ function mouseLeave(e) {
 function handleKeyPress(event) {
     if(event.key == "n") {
       // Current 1: should be replaced with a "Next Scenario" button that comes up after soultion is verified
-        nextScenario();
+        newScenario();
     }
     if(event.key == 'Delete'){
       resetConnections();
     }
 }
 
+function resetConnections(resetAll = false) {
+  //En liten "override" til en "Reset" knapp, resetAll vil alltid være default False, om den er True sletter den alle koblinger
+  if(resetAll == true){
+    currentUserSolution = [];
+    draw();
+    return;
+  }
+
+  if(Object.keys(connections).length != 0){  //Om det er noen tilkoblinger..
+    if(currentSelectedBox != null){ //og Om vi har valgt en boks...
+      connections = connections.filter(object => { //Siden vi bruker en liste med objecter, sjekker vi om toID eller fromID inneholder "nodeID_X",
+        //.filter() går igjennom alle objektene i en liste, returneres True for et objekt er kommer den med i den "nye" listen, om False, så ikke.
+        console.log("Koblinger til/fra "+ currentSelectedBox.nodeId+ " slettet fra " + object);
+        if(!object.fromId.includes(currentSelectedBox.nodeId) && !object.toId.includes(currentSelectedBox.nodeId))//Om nodeID'en vi ser etter finnes i enten toID eller fromID..
+          {
+            return true;// Om hverken toId eller fromId inneholder "nodeId_x" returneres True, da dette objektet skal være med i listen.
+          }else{return false;} 
+        })
+    }else{//Har vi ikke valgt noen boks, så bare sletter vi siste tilknytningen (objektet) i listen. 
+      let lastLine = connections.pop();
+      delete connections[lastLine];
+      console.log("Siste kobling slettet");
+    }
+  }
+
+  //Tegner alt på nytt, siden vi har endrer listene
+  draw();
+}
+
 // Comes from initCanvas or "n" and deploys scenario
 function newScenario(){
+  model.game.canvasHeight = model.loadedScenarioData.aboutScenarios.canvasSize.height
   const scenario = findScenario();
   loadScenario(scenario);
   if (scenario !== 0) {
@@ -182,7 +213,7 @@ function findScenario(){
 
   // Check if all scenarios are completed
   if (model.game.finishedScenarios.length >= model.game.numberOfScenarios){
-    return 0;
+    return -1;
   }
 
   // Sequential mode: next scenario in order
@@ -206,7 +237,8 @@ function findScenario(){
 function loadScenario(scenario){
   // Future 1: the final screen should also be an optional inload via JSON
   // If game is over sends player to final screen
-  if (scenario === 0) {
+  console.log(scenario);
+  if (scenario === -1) {
     endScreen();
     return;
   }
@@ -256,12 +288,38 @@ function loadScenario(scenario){
   }
 
   const dynamicNodes = scenarioData.dynamic
+  let currentRowHeight = model.game.canvasHeight;
+  let currentRowWidth = 20;
+  const nodeSpacing = 10;
+  const maxWidth = model.game.canvasWidth - 40; // Leave margins
+  
   for (let node of dynamicNodes) {
     node.static = false;
     node.width = getNodeWidth(node);
     node.height = 60;
+    
+    if (currentRowWidth + node.width > maxWidth && currentRowWidth > 20) {
+      currentRowHeight += 70;
+      currentRowWidth = 20;
+    }
+    node.coordinates = {
+    x: currentRowWidth,
+    y: currentRowHeight
+    };
+    currentRowWidth += node.width + nodeSpacing;
     model.currentScenario.dynamicNodesInMenu.push(node);
   }
+  model.game.canvasHeight = currentRowHeight + 60;
+  canvas.height = model.game.canvasHeight;
+  console.log(model.game.canvasHeight);
+
+
+  // for (let node of dynamicNodes) {
+  //   node.static = false;
+  //   node.width = getNodeWidth(node);
+  //   node.height = 60;
+  //   model.currentScenario.dynamicNodesInMenu.push(node);
+  // }
   // Current 3:  if building=true: need a section to load in already used nodes and connectors
 }
 
@@ -317,23 +375,23 @@ function deployScenario() {
   draw()
 }
 
-function setTaskDescription(results = [])
-{
-  let tokenTypes = mod
-  let passengerTypes = model.ScenarioLevels[model.game.currentScenario].ScenarioPassengerTypes;
-  let textObject = document.getElementById('taskText');
-  textObject.innerHTML = "";
+// function setTaskDescription(results = [])
+// {
+//   let tokenTypes = mod
+//   let passengerTypes = model.ScenarioLevels[model.game.currentScenario].ScenarioPassengerTypes;
+//   let textObject = document.getElementById('taskText');
+//   textObject.innerHTML = "";
 
-  for(let i = 0; i < passengerTypes.length; i++)
-      {
-        //Om vi har resultater som skal legges til hver linje i PassengerTypes, så legg dette til i HTML koden..
-        (results.length != 0) ? textObject.innerHTML += 
-        //.. Passasjertype beskrivelsen + resultatet. Om resultatet i listen er PASS, skal teksten være grønn, om ikke, så Rød. <br> er linebreak.
-        `${passengerTypes[i]} - ${(results[i] == "PASS") ? "<span style='color: green;'>PASS</span>" : "<span style='color: red;'>FAIL</span>"} </span> <br>` 
-        : textObject.innerHTML += `${passengerTypes[i]} <br>`;
-        console.log(results);
-      }
-}
+//   for(let i = 0; i < passengerTypes.length; i++)
+//       {
+//         //Om vi har resultater som skal legges til hver linje i PassengerTypes, så legg dette til i HTML koden..
+//         (results.length != 0) ? textObject.innerHTML += 
+//         //.. Passasjertype beskrivelsen + resultatet. Om resultatet i listen er PASS, skal teksten være grønn, om ikke, så Rød. <br> er linebreak.
+//         `${passengerTypes[i]} - ${(results[i] == "PASS") ? "<span style='color: green;'>PASS</span>" : "<span style='color: red;'>FAIL</span>"} </span> <br>` 
+//         : textObject.innerHTML += `${passengerTypes[i]} <br>`;
+//         console.log(results);
+//       }
+// }
 
 // Called upon scenario initaition and mouse movement. Deletes the whole canvas and then redraws it.
 function draw() {

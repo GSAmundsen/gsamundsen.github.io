@@ -99,11 +99,11 @@
             "name": "Check-in",
             "parentPoolId": "pool_1",
             "coordinates": {
-              "x": 50,
+              "x": 150,
               "y": 530
             },
             "size": {
-              "width": 1100,
+              "width": 1000,
               "height": 220
             }
           },
@@ -112,11 +112,11 @@
             "name": "Security check",
             "parentPoolId": "pool_1",
             "coordinates": {
-              "x": 50,
+              "x": 150,
               "y": 270
             },
             "size": {
-              "width": 1100,
+              "width": 1000,
               "height": 260
             }
           },
@@ -125,11 +125,11 @@
             "name": "Waiting for flight",
             "parentPoolId": "pool_1",
             "coordinates": {
-              "x": 50,
+              "x": 150,
               "y": 50
             },
             "size": {
-              "width": 1100,
+              "width": 1000,
               "height": 220
             }
           }
@@ -142,8 +142,8 @@
             "parentPoolId": "pool_1",
             "parentLaneId": "lane_1",
             "coordinates": {
-              "x": 120,
-              "y": 640
+              "x": 170,
+              "y": 620
             },
             "functions": []
           },
@@ -154,7 +154,7 @@
             "parentPoolId": "pool_1",
             "parentLaneId": "lane_1",
             "coordinates": {
-              "x": 200,
+              "x": 260,
               "y": 620
             },
             "functions": []

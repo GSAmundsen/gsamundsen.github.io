@@ -84,6 +84,7 @@ function drawTemporaryArrow() {
 function getNodes() {
   return allNodes = [
     ...model.currentScenario.staticNodes,
+    ...model.currentScenario.dynamicNodesInMenu,
     ...model.currentScenario.dynamicNodesOnCanvas
   ];
 }
@@ -166,13 +167,16 @@ function drawGateway(node){
 
 // Tegner selve diamantformen som gatewayene bygger på
 function drawDiamond(node) {
-  const size = node.width
+  const size = node.width;
+  const centerX = node.coordinates.x + size / 2;
+  const centerY = node.coordinates.y + size / 2;
+  
   context.beginPath();
-  context.moveTo(node.coordinates.x, node.coordinates.y - size / 2);         // topp-punkt
-  context.lineTo(node.coordinates.x + size / 2, node.coordinates.y);         // høyre-punkt
-  context.lineTo(node.coordinates.x, node.coordinates.y + size / 2);         // bunn-punkt
-  context.lineTo(node.coordinates.x - size / 2, node.coordinates.y);         // venstre-punkt
-  context.closePath();                // lukker figuren             // fyllfarge inni diamanten
+  context.moveTo(centerX, centerY - size / 2);
+  context.lineTo(centerX + size / 2, centerY);
+  context.lineTo(centerX, centerY + size / 2);
+  context.lineTo(centerX - size / 2, centerY);
+  context.closePath();
   context.fill();
   context.stroke();
 }
@@ -181,12 +185,14 @@ function drawDiamond(node) {
 // Brukes når bare én vei kan tas (enten/eller)
 function drawExclusiveGateway(node) {
   const size = node.width;
+  const centerX = node.coordinates.x + size / 2;
+  const centerY = node.coordinates.y + size / 2;
+  
   context.beginPath();
-  // Tegner en X inni diamanten
-  context.moveTo(node.coordinates.x - size / 4, node.coordinates.y - size / 4);
-  context.lineTo(node.coordinates.x + size / 4, node.coordinates.y + size / 4);
-  context.moveTo(node.coordinates.x + size / 4, node.coordinates.y - size / 4);
-  context.lineTo(node.coordinates.x - size / 4, node.coordinates.y + size / 4);
+  context.moveTo(centerX - size / 4, centerY - size / 4);
+  context.lineTo(centerX + size / 4, centerY + size / 4);
+  context.moveTo(centerX + size / 4, centerY - size / 4);
+  context.lineTo(centerX - size / 4, centerY + size / 4);
   context.stroke();
 }
 
@@ -194,12 +200,14 @@ function drawExclusiveGateway(node) {
 // Brukes når flere flyter skal skje samtidig (alle grener kjøres)
 function drawParallelGateway(node) {
   const size = node.width;
+  const centerX = node.coordinates.x + size / 2;
+  const centerY = node.coordinates.y + size / 2;
+  
   context.beginPath();
-  // Tegner et pluss-tegn (+) inni diamanten
-  context.moveTo(node.coordinates.x - size / 4, node.coordinates.y);         // horisontal strek
-  context.lineTo(node.coordinates.x + size / 4, node.coordinates.y);
-  context.moveTo(node.coordinates.x, node.coordinates.y - size / 4);         // vertikal strek
-  context.lineTo(node.coordinates.x, node.coordinates.y + size / 4);
+  context.moveTo(centerX - size / 4, centerY);
+  context.lineTo(centerX + size / 4, centerY);
+  context.moveTo(centerX, centerY - size / 4);
+  context.lineTo(centerX, centerY + size / 4);
   context.stroke();
 }
 
@@ -207,17 +215,21 @@ function drawParallelGateway(node) {
 // Brukes når en eller flere flyter kan aktiveres samtidig
 function drawInclusiveGateway(node) {
   const size = node.width;
+  const centerX = node.coordinates.x + size / 2;
+  const centerY = node.coordinates.y + size / 2;
+  
   context.beginPath();
-  // Tegner en liten sirkel inni diamanten
-  context.arc(node.coordinates.x, node.coordinates.y, size / 5, 0, Math.PI * 2);
+  context.arc(centerX, centerY, size / 5, 0, Math.PI * 2);
   context.stroke();
 }
 
 function drawEvent(node) {
-  const size = node.width;
+  const radius = node.width / 2;
   context.beginPath();
   // Tegner en liten sirkel inni diamanten
-  context.arc(node.coordinates.x, node.coordinates.y, size / 2, 0, Math.PI * 2);
+  context.arc(node.coordinates.x + radius, 
+              node.coordinates.y + radius, 
+              radius, 0, Math.PI * 2);
   context.fillStyle = 'white';
   context.fill(); 
   context.stroke();
