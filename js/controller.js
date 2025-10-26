@@ -18,7 +18,43 @@ let tempLineEnd = { x: 0, y: 0 };
 let testResults = []; //List of strings, PASS or FAIL. Index needs to match the corresponding entry in ScenarioPassengerTypes and ScenarioSolutions
 let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket på, slik at vi kan hente ut nodeID, som kan brukes til å slette tilkn.
 
+// === Læringsmåling (BKT) ===
 
+// Spillerinformasjon
+let player = {
+  id: "TS01",       // unik spiller-ID (initialer + nummer)
+  name: "Thomas",   // valgfritt
+  knowledge: 0.0    // startverdi fra quiz
+};
+
+// Resultater fra passasjerer (1 = riktig, 0 = feil)
+let results = [];
+
+// Enkel BKT-modell (måler sannsynlighet for læring)
+class BKT {
+  constructor(start = 0.3, learn = 0.2) {
+    this.P = start;    // startnivå (fra quiz)
+    this.learn = learn; // hvor raskt man lærer
+  }
+
+  // Oppdater sannsynligheten etter riktig/feil
+  update(isCorrect) {
+    this.P = isCorrect
+      ? this.P + (1 - this.P) * this.learn   // lærer litt
+      : this.P * (1 - this.learn / 2);       // mister litt
+    return this.P;
+  }
+}
+
+// Opprett modell (oppdateres senere med quiz-score)
+let learner = new BKT();
+
+function loadQuizResult() {
+  let quizScore = 0.6; // f.eks. 60% riktig på quiz
+  player.knowledge = quizScore;
+  learner = new BKT(quizScore); // bruker dette som startnivå
+  console.log("Startnivå fra quiz:", quizScore);
+}
 
 function initCanvas() 
 {
@@ -379,38 +415,66 @@ function testSolution(){
 
 //Sjekker brukernes løsning mot alle riktige løsninger i modellen
 function verifySolution() {
-    testResults = [] //nullstiller tidligere resultater
+    testResults = []; // Nullstiller tidligere tekstresultater
+    let results = []; // Ny liste som lagrer 1 (PASS) / 0 (FAIL)
 
-    let scenarioSolutions = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution
-    console.log("Loaded Scenario Solutions ", scenarioSolutions)
+    let scenarioSolutions = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution;
+    console.log("Loaded Scenario Solutions ", scenarioSolutions);
     
-    // We go through all the Arrays (passenger scenarios) in the ScenarioSolutions, one by one
     for (let i = 0; i < scenarioSolutions.length; i++) {
         let passengerScenario = scenarioSolutions[i];
-        console.log("current passenger scenario from the model ", passengerScenario)
+        console.log("current passenger scenario from the model ", passengerScenario);
       
-      
-        //For hver (.every) transition par ["x","y"] i "passenger solution array" [["x","y"],["x","z"]] i modellen (ScenarioSolutions)..
+        // Sammenlign spillerens løsning med riktig løsning
         let isMatch = passengerScenario.every(
-        //..om et par er en del av (.some) brukerens løsning (array)
-        (transitionPair) => currentUserSolution.some(
-            //er denne (vi er i en for-løkke) passasjerens transition array lik NOEN av parene i currentUserSolution (ex. ["start", "end"]
-            //for eksempel, "er det et tilfelle hvor "start" matcher "start" AND "end" matcher "end" 
-            (userPair) => transitionPair[0] === userPair[0] && transitionPair[1] === userPair[1]
+            (transitionPair) => currentUserSolution.some(
+                (userPair) => transitionPair[0] === userPair[0] && transitionPair[1] === userPair[1]
             )
         );
-        //Finner vi en match i brukerens løsning, for hvert transition pair, i denne passasjerens array (model.ScenarioSolutions[0,1,2, etc])..
-        if (isMatch) {
-            console.log("Passenger "+(i+1)+" = "+"%c PASS", "color: green; font-size:18px;"); //Can maybe add a passenger description here? "Passenger with passport, no baggage"
-            testResults.push("PASS");
-        } 
-        //om ikke...
-        else {
-            console.log("Passenger "+(i+1)+" = "+"%c FAIL", "color: red; font-size:18px;"); //Same here, so the user understands WHICH passenger failed?
-            testResults.push("FAIL");
+
+        // === 📊 Her legger vi til læringslogikk ===
+        let val = isMatch ? 1 : 0;
+        results.push(val); 
+        testResults.push(isMatch ? "PASS" : "FAIL");
+
+        // Oppdater læringssannsynlighet (BKT-modellen)
+        if (typeof learner !== "undefined") {
+            player.knowledge = learner.update(isMatch);
+            console.log(`🎓 Oppdatert kunnskap: ${player.knowledge.toFixed(2)}`);
         }
+
+        // Logg resultat til konsollen
+        console.log(
+            "Passenger " + (i + 1) + " = " + (isMatch ? "%c PASS" : "%c FAIL"),
+            isMatch ? "color: green; font-size:18px;" : "color: red; font-size:18px;"
+        );
     }
 
+    // Oppdater visningen
     setTaskDescription(testResults);
+
+    // === 💾 Lagre resultatene (enkelt system) ===
+    const data = {
+        id: player.id,
+        knowledge: player.knowledge,
+        results: results,
+        timestamp: new Date().toLocaleString()
+    };
+    localStorage.setItem(`learning_${player.id}`, JSON.stringify(data));
+    console.log("💾 Læringsdata lagret:", data);
+}
+
+}
+
+function saveLearningData() {
+  const data = {
+    id: player.id,
+    knowledge: player.knowledge,
+    results: results,
+    timestamp: new Date().toLocaleString()
+  };
+
+  localStorage.setItem(`learning_${player.id}`, JSON.stringify(data));
+  console.log("lagret læringsdata:", data);
 }
 
