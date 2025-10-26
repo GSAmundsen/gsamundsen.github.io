@@ -10,3 +10,5 @@ Gerry: - Lage verifiseringsløsning, som sammenligner mellomlagrede tilknytninge
 Users solution is stored as an Array of transition pairs(array). The required Passenger transitions defined in 
 the model.ScenarioLevels.ScenarioSolutions are tested against the users solution, resulting in a PASS if 
 all transitions for that passenger matches, or FAIL if one transition pair is not present in the users solution.
+
+- Lage startknapp og måte for spillere å legge inn spillerinfo (brukerid som de brukte i quiz)
