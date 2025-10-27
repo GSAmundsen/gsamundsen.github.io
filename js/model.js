@@ -6,6 +6,8 @@ let model = {
     // Other static properties
     staticProperties: {
         canvasBackgroundColor: 'white',
+        selectedBoxColor: 'rgba(171, 224, 224, 1)',
+        normalBoxFill: 'white',
     },
     
     // Information about the current game

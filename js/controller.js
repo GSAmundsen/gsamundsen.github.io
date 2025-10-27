@@ -199,7 +199,7 @@ function newScenario(){
   model.game.canvasHeight = model.loadedScenarioData.aboutScenarios.canvasSize.height
   const scenario = findScenario();
   loadScenario(scenario);
-  if (scenario !== 0) {
+  if (scenario !== -1) {
     deployScenario();
   }
 }
@@ -242,7 +242,7 @@ function loadScenario(scenario){
     endScreen();
     return;
   }
-
+  model.game.currentScenario = scenario;
   // Preserves old scenario data if scenarios are building then wipes currentScenario clean
   if (model.game.building === true) {
     const lastScenario = model.currentScenario
@@ -311,7 +311,6 @@ function loadScenario(scenario){
   }
   model.game.canvasHeight = currentRowHeight + 60;
   canvas.height = model.game.canvasHeight;
-  console.log(model.game.canvasHeight);
 
 
   // for (let node of dynamicNodes) {

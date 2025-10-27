@@ -124,7 +124,17 @@ function drawNodes(nodes = []) {
   context.font = "14px Arial";
   context.textAlign = "center";
   context.textBaseline = "middle";
+
+  let selectedNode = null;
+  
   for (const node of nodes){
+    if (currentSelectedBox != null && currentSelectedBox.nodeId === node.nodeId) {
+      selectedNode = node;
+      continue;
+    }
+    
+    context.fillStyle = model.staticProperties.normalBoxFill
+    
     if(node.type === "activity"){
       drawActivity(node);
     } else if (node.type.includes('Gateway')) {
@@ -133,11 +143,23 @@ function drawNodes(nodes = []) {
       drawEvent(node)
     }
   }
+
+  // Draws the selected box after the others
+  if (selectedNode !== null) {
+    context.fillStyle = model.staticProperties.selectedBoxColor;
+    
+    if(selectedNode.type === "activity"){
+      drawActivity(selectedNode);
+    } else if (selectedNode.type.includes('Gateway')) {
+      drawGateway(selectedNode);
+    } else if (selectedNode.type.includes('Event')) {
+      drawEvent(selectedNode)
+    }
+  }
 }
 
 // Draws activities
 function drawActivity(node) {
-  context.fillStyle = 'white';
   context.fillRect(node.coordinates.x, node.coordinates.y, node.width, node.height);
   context.strokeRect(node.coordinates.x, node.coordinates.y, node.width, node.height);        
   context.fillStyle = 'black';
@@ -148,7 +170,6 @@ function drawActivity(node) {
 
 // Draws gateways
 function drawGateway(node){
-  context.fillStyle = 'white';
   drawDiamond(node);
   if(node.type === 'xorGateway') {
     drawExclusiveGateway(node)
@@ -230,7 +251,6 @@ function drawEvent(node) {
   context.arc(node.coordinates.x + radius, 
               node.coordinates.y + radius, 
               radius, 0, Math.PI * 2);
-  context.fillStyle = 'white';
   context.fill(); 
   context.stroke();
 }
