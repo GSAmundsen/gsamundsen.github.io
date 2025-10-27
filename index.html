@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>INFO310 Gruppeoppgave</title>
+  <title>INFO310 - BPMN Teaching Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="css/style.css">
   <style>
@@ -59,18 +59,18 @@
 </head>
 
 <body>
-  <h3>INFO310 - BPMN Undervisningsprototype</h3>
+  <h3>INFO310 - BPMN Teaching Prototype</h3>
 
-  <!-- Spilleren skriver inn ID -->
+  <!-- Player ID input section -->
   <div id="playerSection">
-    <label><b>Skriv inn initialer og fødselsdato:</b></label><br>
-    <input type="text" id="initials" placeholder="Initialer (f.eks. TS)" maxlength="3" style="width:100px;">
+    <label><b>Enter your initials and birth date:</b></label><br>
+    <input type="text" id="initials" placeholder="Initials (e.g., TS)" maxlength="3" style="width:100px;">
     <input type="number" id="birthMonth" placeholder="MM" min="1" max="12" style="width:80px;">
     <input type="number" id="birthDay" placeholder="DD" min="1" max="31" style="width:80px;">
-    <button onclick="startGame()">Start spill</button>
+    <button onclick="startGame()">Start Game</button>
   </div>
 
-  <!-- Viser ID etter at spillet starter -->
+  <!-- Shows after player starts -->
   <div id="playerInfo" style="display:none;"></div>
 
   <div id="app">
@@ -78,42 +78,41 @@
     <canvas id="BPMNcanvas"></canvas>
   </div>
 
-  <!-- Koble til skriptfiler -->
+  <!-- JS files -->
   <script src="js/model.js"></script>
   <script src="js/view.js"></script>
   <script src="js/controller.js"></script>
   <script src="js/drawFunctions.js"></script>
 
-  <!-- Opprett spiller og start spill -->
+  <!-- Player ID and start logic -->
   <script>
     function startGame() {
       const initials = document.getElementById("initials").value.trim().toUpperCase();
       const month = document.getElementById("birthMonth").value.trim();
       const day = document.getElementById("birthDay").value.trim();
 
-      // Enkle sjekker
       if (!initials || !month || !day) {
-        alert("Fyll inn alle felt (initialer, måned og dag).");
+        alert("Please fill in all fields (initials, month, and day).");
         return;
       }
 
-      // Formater til to siffer
+      // Format with leading zero
       const formattedMonth = month.padStart(2, "0");
       const formattedDay = day.padStart(2, "0");
 
-      // Lag spiller-ID, f.eks. TS2607
+      // Create player ID (example: TS2607)
       player.id = `${initials}${formattedDay}${formattedMonth}`;
-      console.log("Spiller-ID:", player.id);
+      console.log("Player ID:", player.id);
 
-      // Lagre ID i nettleseren
+      // Save ID in browser
       localStorage.setItem("lastPlayerID", player.id);
 
-      // Skjul input og vis bekreftelse
+      // Hide input fields, show player info
       document.getElementById("playerSection").style.display = "none";
       document.getElementById("playerInfo").style.display = "block";
-      document.getElementById("playerInfo").innerText = `Spiller-ID: ${player.id}`;
+      document.getElementById("playerInfo").innerText = `Player ID: ${player.id}`;
 
-      // Start quiz og spill
+      // Start game
       loadQuizResult();
       initCanvas();
     }
