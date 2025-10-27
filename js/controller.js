@@ -18,7 +18,7 @@ let tempLineEnd = { x: 0, y: 0 };
 let testResults = []; //List of strings, PASS or FAIL. Index needs to match the corresponding entry in ScenarioPassengerTypes and ScenarioSolutions
 let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket på, slik at vi kan hente ut nodeID, som kan brukes til å slette tilkn.
 
-// === Læringsmåling (BKT) ===
+// Læringsmåling (BKT)
 
 // Spillerinformasjon
 let player = {
