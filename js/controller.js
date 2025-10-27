@@ -461,20 +461,11 @@ function verifySolution() {
         timestamp: new Date().toLocaleString()
     };
     localStorage.setItem(`learning_${player.id}`, JSON.stringify(data));
-    console.log("💾 Læringsdata lagret:", data);
+    console.log("Læringsdata lagret:", data);
 }
 
-}
-
-function saveLearningData() {
-  const data = {
-    id: player.id,
-    knowledge: player.knowledge,
-    results: results,
-    timestamp: new Date().toLocaleString()
-  };
-
-  localStorage.setItem(`learning_${player.id}`, JSON.stringify(data));
-  console.log("lagret læringsdata:", data);
-}
+window.onload = function() {
+  loadQuizResult();   // sets initial knowledge level
+  initCanvas();       // starts the game
+};
 
