@@ -1,25 +1,122 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="no">
 <head>
-    <meta charset="UTF-8">
-    <title>INFO310 Gruppeoppgave</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <title>INFO310 Gruppeoppgave</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fa;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    #playerSection {
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #ffffff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: fit-content;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    input {
+      margin: 5px;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    button {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 4px;
+      background-color: #0078d4;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #005ea2;
+    }
+
+    #playerInfo {
+      margin: 10px;
+      font-weight: bold;
+    }
+
+    canvas {
+      border: 1px solid #ccc;
+      margin-top: 15px;
+    }
+  </style>
 </head>
 
-<body onload="updateView()">
-    <h3 style="text-align: center;">INFO310 - BPMN Teaching Prototype</h3>
-    <div id="app">
+<body>
+  <h3>INFO310 - BPMN Undervisningsprototype</h3>
 
-        <div id="BoxContainer">
+  <!-- Spilleren skriver inn ID -->
+  <div id="playerSection">
+    <label><b>Skriv inn initialer og fødselsdato:</b></label><br>
+    <input type="text" id="initials" placeholder="Initialer (f.eks. TS)" maxlength="3" style="width:100px;">
+    <input type="number" id="birthMonth" placeholder="MM" min="1" max="12" style="width:80px;">
+    <input type="number" id="birthDay" placeholder="DD" min="1" max="31" style="width:80px;">
+    <button onclick="startGame()">Start spill</button>
+  </div>
 
-        </div>
-    </div>
+  <!-- Viser ID etter at spillet starter -->
+  <div id="playerInfo" style="display:none;"></div>
 
+  <div id="app">
+    <div id="BoxContainer"></div>
+    <canvas id="BPMNcanvas"></canvas>
+  </div>
 
+  <!-- Koble til skriptfiler -->
+  <script src="js/model.js"></script>
+  <script src="js/view.js"></script>
+  <script src="js/controller.js"></script>
+  <script src="js/drawFunctions.js"></script>
+
+  <!-- Opprett spiller og start spill -->
+  <script>
+    function startGame() {
+      const initials = document.getElementById("initials").value.trim().toUpperCase();
+      const month = document.getElementById("birthMonth").value.trim();
+      const day = document.getElementById("birthDay").value.trim();
+
+      // Enkle sjekker
+      if (!initials || !month || !day) {
+        alert("Fyll inn alle felt (initialer, måned og dag).");
+        return;
+      }
+
+      // Formater til to siffer
+      const formattedMonth = month.padStart(2, "0");
+      const formattedDay = day.padStart(2, "0");
+
+      // Lag spiller-ID, f.eks. TS2607
+      player.id = `${initials}${formattedDay}${formattedMonth}`;
+      console.log("Spiller-ID:", player.id);
+
+      // Lagre ID i nettleseren
+      localStorage.setItem("lastPlayerID", player.id);
+
+      // Skjul input og vis bekreftelse
+      document.getElementById("playerSection").style.display = "none";
+      document.getElementById("playerInfo").style.display = "block";
+      document.getElementById("playerInfo").innerText = `Spiller-ID: ${player.id}`;
+
+      // Start quiz og spill
+      loadQuizResult();
+      initCanvas();
+    }
+  </script>
 </body>
-    <script src="js/model.js"></script>
-    <script src="js/view.js"></script>
-    <script src="js/controller.js"></script>
-    <script src="js/drawFunctions.js"></script>
 </html>
