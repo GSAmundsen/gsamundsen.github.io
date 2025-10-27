@@ -22,7 +22,7 @@ let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket p�
 
 // Spillerinformasjon
 let player = {
-  id: "TS2607",       // unik spiller-ID (initialer + fødselsdato)
+  id: "TS2607",       // unik spiller-ID (initialer + fødselsdato) må gjøre det slik at spiller legger inn egen id og ikke harcodet slik som nå
   name: "Thomas",   // valgfritt (trenger ikke dette)
   knowledge: 0.0    // startverdi fra quiz
 };
