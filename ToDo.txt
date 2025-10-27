@@ -11,4 +11,6 @@ Users solution is stored as an Array of transition pairs(array). The required Pa
 the model.ScenarioLevels.ScenarioSolutions are tested against the users solution, resulting in a PASS if 
 all transitions for that passenger matches, or FAIL if one transition pair is not present in the users solution.
 
-- Lage startknapp og måte for spillere å legge inn spillerinfo (brukerid som de brukte i quiz)
+Thomas - Lage startknapp og måte for spillere å legge inn spillerinfo (brukerid som de brukte i quiz)
+
+Thomas - kunne automatisk hente quiz results og registrere dem inn i spillet slik at vi slipper å gjøre det manuelt
