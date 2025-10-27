@@ -20,41 +20,39 @@ let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket p�
 
 // Læringsmåling (BKT)
 
-// Spillerinformasjon
+// Spillerobjekt – brukes til å knytte resultater til en bestemt bruker
 let player = {
-  id: "TS2607",       // unik spiller-ID (initialer + fødselsdato) må gjøre det slik at spiller legger inn egen id og ikke harcodet slik som nå
-  name: "Thomas",   // valgfritt (trenger ikke dette)
-  knowledge: 0.0    // startverdi fra quiz
+  id: "",          // ID (initialer + dato, f.eks. TS2607)
+  knowledge: 0.0   // Kunnskapsnivå, oppdateres via BKT
 };
 
-// Resultater fra passasjerer (1 = riktig, 0 = feil)
-let results = [];
-
-// Enkel BKT-modell (måler sannsynlighet for læring)
+// Enkel versjon av Bayesian Knowledge Tracing (BKT)
 class BKT {
   constructor(start = 0.3, learn = 0.2) {
-    this.P = start;    // startnivå (fra quiz)
-    this.learn = learn; // hvor raskt man lærer
+    this.P = start;    // Startnivå (fra quiz eller antatt)
+    this.learn = learn; // Hvor raskt spilleren lærer
   }
 
-  // Oppdater sannsynligheten etter riktig/feil
+  // Oppdaterer sannsynligheten for læring basert på om spilleren gjør riktig eller feil
   update(isCorrect) {
     this.P = isCorrect
-      ? this.P + (1 - this.P) * this.learn   // lærer litt
-      : this.P * (1 - this.learn / 2);       // mister litt
+      ? this.P + (1 - this.P) * this.learn   // Øker hvis riktig
+      : this.P * (1 - this.learn / 2);       // Minker litt hvis feil
     return this.P;
   }
 }
 
-// Opprett modell (oppdateres senere med quiz-score)
+// Opprett en standard BKT-instans
 let learner = new BKT();
 
+// Midlertidig funksjon for å simulere et quiz-resultat (kan kobles til faktisk quiz senere)
 function loadQuizResult() {
-  let quizScore = 0.6; // f.eks. 60% riktig på quiz
+  let quizScore = 0.6; // Eksempel: 60 % riktig
   player.knowledge = quizScore;
-  learner = new BKT(quizScore); // bruker dette som startnivå
+  learner = new BKT(quizScore);
   console.log("Startnivå fra quiz:", quizScore);
 }
+
 
 function initCanvas() 
 {
@@ -413,56 +411,42 @@ function testSolution(){
 
 
 
-//Sjekker brukernes løsning mot alle riktige løsninger i modellen
+// Sjekker brukerens løsning mot riktig løsning (enklere versjon)
 function verifySolution() {
-    testResults = []; // Nullstiller tidligere tekstresultater
-    let results = []; // Ny liste som lagrer 1 (PASS) / 0 (FAIL)
+  // Nullstiller tidligere data
+  testResults = [];
+  let results = [];
 
-    let scenarioSolutions = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution;
-    console.log("Loaded Scenario Solutions ", scenarioSolutions);
-    
-    for (let i = 0; i < scenarioSolutions.length; i++) {
-        let passengerScenario = scenarioSolutions[i];
-        console.log("current passenger scenario from the model ", passengerScenario);
-      
-        // Sammenlign spillerens løsning med riktig løsning
-        let isMatch = passengerScenario.every(
-            (transitionPair) => currentUserSolution.some(
-                (userPair) => transitionPair[0] === userPair[0] && transitionPair[1] === userPair[1]
-            )
-        );
+  // Henter korrekt løsning for nåværende scenario
+  let correctSolution = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution;
 
-        // Her legger vi til læringslogikk 
-        let val = isMatch ? 1 : 0;
-        results.push(val); 
-        testResults.push(isMatch ? "PASS" : "FAIL");
+  // Sjekker om brukerens løsning er lik den riktige
+  let isCorrect = JSON.stringify(currentUserSolution) === JSON.stringify(correctSolution);
 
-        // Oppdater læringssannsynlighet (BKT-modellen)
-        if (typeof learner !== "undefined") {
-            player.knowledge = learner.update(isMatch);
-            console.log(`🎓 Oppdatert kunnskap: ${player.knowledge.toFixed(2)}`);
-        }
+  // Legger til resultat (1 = riktig, 0 = feil)
+  results.push(isCorrect ? 1 : 0);
 
-        // Logg resultat til konsollen
-        console.log(
-            "Passenger " + (i + 1) + " = " + (isMatch ? "%c PASS" : "%c FAIL"),
-            isMatch ? "color: green; font-size:18px;" : "color: red; font-size:18px;"
-        );
-    }
+  // Oppdaterer spillerens kunnskapsnivå (BKT)
+  if (typeof learner !== "undefined") {
+    player.knowledge = learner.update(isCorrect);
+    console.log(`Oppdatert kunnskapsnivå: ${player.knowledge.toFixed(2)}`);
+  }
 
-    // Oppdater visningen
-    setTaskDescription(testResults);
+  // Logger resultat til konsollen (for utvikleren)
+  console.log(`Scenario ${model.game.currentScenario}: ${isCorrect ? "Riktig" : "Feil"}`);
 
-    // Lagre resultatene 
-    const data = {
-        id: player.id,
-        knowledge: player.knowledge,
-        results: results,
-        timestamp: new Date().toLocaleString()
-    };
-    localStorage.setItem(`learning_${player.id}`, JSON.stringify(data));
-    console.log("Læringsdata lagret:", data);
+  // Lagre læringsdata lokalt i nettleseren
+  const data = {
+    id: player.id,
+    knowledge: player.knowledge,
+    result: isCorrect ? 1 : 0,
+    timestamp: new Date().toLocaleString(),
+  };
+
+  localStorage.setItem(`learning_${player.id}`, JSON.stringify(data));
+  console.log("Læringsdata lagret:", data);
 }
+
 
 window.onload = function() {
   loadQuizResult();   // sets initial knowledge level
