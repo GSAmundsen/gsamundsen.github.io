@@ -432,7 +432,7 @@ function verifySolution() {
             )
         );
 
-        // === 📊 Her legger vi til læringslogikk ===
+        // Her legger vi til læringslogikk 
         let val = isMatch ? 1 : 0;
         results.push(val); 
         testResults.push(isMatch ? "PASS" : "FAIL");
@@ -453,7 +453,7 @@ function verifySolution() {
     // Oppdater visningen
     setTaskDescription(testResults);
 
-    // === 💾 Lagre resultatene (enkelt system) ===
+    // Lagre resultatene 
     const data = {
         id: player.id,
         knowledge: player.knowledge,
