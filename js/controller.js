@@ -448,8 +448,5 @@ function verifySolution() {
 }
 
 
-window.onload = function() {
-  loadQuizResult();   // sets initial knowledge level
-  initCanvas();       // starts the game
-};
+
 
