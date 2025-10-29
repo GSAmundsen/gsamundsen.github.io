@@ -5,114 +5,66 @@
   <title>INFO310 - BPMN Teaching Prototype</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="css/style.css">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f7fa;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-
-    #playerSection {
-      margin: 20px auto;
-      padding: 15px;
-      background-color: #ffffff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      width: fit-content;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    input {
-      margin: 5px;
-      padding: 6px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-      text-align: center;
-    }
-
-    button {
-      padding: 6px 14px;
-      border: none;
-      border-radius: 4px;
-      background-color: #0078d4;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    button:hover {
-      background-color: #005ea2;
-    }
-
-    #playerInfo {
-      margin: 10px;
-      font-weight: bold;
-    }
-
-    canvas {
-      border: 1px solid #ccc;
-      margin-top: 15px;
-    }
-  </style>
 </head>
 
 <body>
-  <h3>INFO310 - BPMN Teaching Prototype</h3>
+  <h3 style="text-align: center;">INFO310 - BPMN Teaching Prototype</h3>
 
-  <!-- Player ID input section -->
-  <div id="playerSection">
-    <label><b>Enter your initials and birth date:</b></label><br>
-    <input type="text" id="initials" placeholder="Initials (e.g., TS)" maxlength="3" style="width:100px;">
-    <input type="number" id="birthMonth" placeholder="MM" min="1" max="12" style="width:80px;">
-    <input type="number" id="birthDay" placeholder="DD" min="1" max="31" style="width:80px;">
+  <!-- === LOGIN SECTION === -->
+  <div id="loginSection" style="text-align:center; margin-bottom: 20px;">
+    <label for="playerID">Enter your ID (e.g., TS2607): </label>
+    <input type="text" id="playerID" placeholder="Initials + birthdate (e.g., TS2607)">
     <button onclick="startGame()">Start Game</button>
   </div>
 
-  <!-- Shows after player starts -->
-  <div id="playerInfo" style="display:none;"></div>
+  <!-- === GAME AREA (hidden until game starts) === -->
+  <div id="app" style="display:none; text-align:center;">
+    <!-- Scenario text -->
+    <div id="scenarioTextHeader" style="font-weight:bold; margin-bottom:10px;">
+      Scenario description will appear here.
+    </div>
 
-  <div id="app">
-    <div id="BoxContainer"></div>
-    <canvas id="BPMNcanvas"></canvas>
+    <!-- Task results text -->
+    <div id="taskText" style="margin-bottom:10px;">
+      Task results will appear here.
+    </div>
+
+    <!-- Canvas for drawing BPMN -->
+    <canvas id="BPMNcanvas" width="1000" height="500" style="border:1px solid #ccc;"></canvas>
+
+    <!-- Button to test or verify solution -->
+    <div style="margin-top:15px;">
+      <button onclick="testSolution()">Verify Solution</button>
+    </div>
   </div>
 
-  <!-- JS files -->
+  <!-- === SCRIPT IMPORTS === -->
   <script src="js/model.js"></script>
   <script src="js/view.js"></script>
   <script src="js/controller.js"></script>
   <script src="js/drawFunctions.js"></script>
 
-  <!-- Player ID and start logic -->
+  <!-- === GAME START FUNCTION === -->
   <script>
     function startGame() {
-      const initials = document.getElementById("initials").value.trim().toUpperCase();
-      const month = document.getElementById("birthMonth").value.trim();
-      const day = document.getElementById("birthDay").value.trim();
+      const idInput = document.getElementById("playerID").value.trim();
 
-      if (!initials || !month || !day) {
-        alert("Please fill in all fields (initials, month, and day).");
+      if (idInput === "") {
+        alert("Please enter your ID (e.g., TS2607)");
         return;
       }
 
-      // Format with leading zero
-      const formattedMonth = month.padStart(2, "0");
-      const formattedDay = day.padStart(2, "0");
+      // Set player ID
+      if (typeof player !== "undefined") {
+        player.id = idInput.toUpperCase();
+        console.log("👤 Player ID:", player.id);
+      }
 
-      // Create player ID (example: TS2607)
-      player.id = `${initials}${formattedDay}${formattedMonth}`;
-      console.log("Player ID:", player.id);
+      // Hide login, show game
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("app").style.display = "block";
 
-      // Save ID in browser
-      localStorage.setItem("lastPlayerID", player.id);
-
-      // Hide input fields, show player info
-      document.getElementById("playerSection").style.display = "none";
-      document.getElementById("playerInfo").style.display = "block";
-      document.getElementById("playerInfo").innerText = `Player ID: ${player.id}`;
-
-      // Start game
+      // Start the game
       loadQuizResult();
       initCanvas();
     }
