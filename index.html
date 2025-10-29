@@ -29,22 +29,29 @@
       Task results will appear here.
     </div>
 
-    <!-- Canvas for drawing BPMN -->
+    <!-- Canvas for BPMN -->
     <canvas id="BPMNcanvas" width="1000" height="500" style="border:1px solid #ccc;"></canvas>
 
-    <!-- Button to test or verify solution -->
+    <!-- Game control buttons -->
     <div style="margin-top:15px;">
-      <button onclick="testSolution()">Verify Solution</button>
+      <button onclick="testSolution()">✅ Verify Solution</button>
+      <button onclick="nextScenario()">➡️ Next Scenario</button>
+      <button onclick="resetConnections(true)">🗑️ Reset All</button>
+    </div>
+
+    <!-- Learning indicator -->
+    <div id="learningStatus" style="margin-top:15px; font-weight:bold;">
+      Knowledge Level: <span id="knowledgeValue">0.00</span>
     </div>
   </div>
 
-  <!-- === SCRIPT IMPORTS === -->
+  <!-- === SCRIPT IMPORTS (placed at the end so HTML loads first) === -->
   <script src="js/model.js"></script>
   <script src="js/view.js"></script>
-  <script src="js/controller.js"></script>
   <script src="js/drawFunctions.js"></script>
+  <script src="js/controller.js"></script>
 
-  <!-- === GAME START FUNCTION === -->
+  <!-- === START GAME FUNCTION === -->
   <script>
     function startGame() {
       const idInput = document.getElementById("playerID").value.trim();
@@ -68,6 +75,21 @@
       loadQuizResult();
       initCanvas();
     }
+
+    // Update knowledge display whenever learner updates
+    function updateLearningDisplay() {
+      if (typeof player !== "undefined") {
+        const value = document.getElementById("knowledgeValue");
+        value.textContent = player.knowledge.toFixed(2);
+      }
+    }
+
+    // Hook into verifySolution to refresh display after updates
+    const originalVerify = verifySolution;
+    verifySolution = function () {
+      originalVerify();
+      updateLearningDisplay();
+    };
   </script>
 </body>
 </html>
