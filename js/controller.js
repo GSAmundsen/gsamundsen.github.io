@@ -447,6 +447,79 @@ function verifySolution() {
   console.log("Læringsdata lagret:", data);
 }
 
+//  STARTSPILL-FUNKSJON 
+// Denne funksjonen kjører når brukeren trykker "Start spill"
+function startGame() {
+  // Hent verdier fra input-feltene
+  const initials = document.getElementById("initials").value.trim().toUpperCase();
+  const day = document.getElementById("birthDay").value.trim().padStart(2, "0");
+  const month = document.getElementById("birthMonth").value.trim().padStart(2, "0");
+
+  // Sjekk at alle felt er fylt inn
+  if (!initials || !day || !month) {
+    alert("Vennligst fyll ut alle felt (initialer, dag og måned).");
+    return;
+  }
+
+  // Bygger spiller-ID, f.eks. TS2607
+  const playerID = `${initials}${day}${month}`;
+  player.id = playerID;
+  console.log("👤 Spiller-ID:", player.id);
+
+  // Skjul login-seksjonen og vis spillet
+  document.getElementById("loginSection").style.display = "none";
+  document.getElementById("app").style.display = "block";
+
+  // Laster inn startverdi (quiz-score) og starter spillet
+  loadQuizResult();
+  initCanvas();
+
+  // Oppdaterer visning av kunnskapsnivå
+  updateLearningDisplay();
+}
+
+// OPPDATERER KUNNSKAPSNIVÅ I VISNINGEN 
+function updateLearningDisplay() {
+  const val = document.getElementById("knowledgeValue");
+  if (val && player) val.textContent = player.knowledge.toFixed(2);
+}
+
+// OPPDATER VISNINGEN ETTER HVER VERIFISERING 
+// Denne "wrapper" verifySolution slik at kunnskapsnivået oppdateres automatisk etter brukeren sjekker løsningen
+const gammelVerify = verifySolution;
+verifySolution = function () {
+  gammelVerify();
+  updateLearningDisplay();
+};
+
+// EKSPORTER ALLE RESULTATER TIL CSV 
+// Denne funksjonen samler alle "learning_*"-elementer i localStorage
+// og lagrer dem i en .csv-fil som lastes ned i nettleseren
+function exportResultsToCSV() {
+  // Samle alle nøkler som starter med "learning_"
+  const keys = Object.keys(localStorage).filter(k => k.startsWith("learning_"));
+  if (keys.length === 0) {
+    alert("no learnigndata found!");
+    return;
+  }
+
+  // Bygg CSV-header og rader
+  let csvContent = "PlayerID,Knowledge,Result,Timestamp\n";
+
+  keys.forEach(key => {
+    const data = JSON.parse(localStorage.getItem(key));
+    csvContent += `${data.id},${data.knowledge},${data.result},${data.timestamp}\n`;
+  });
+
+  // Lag en Blob (datafil) og last den ned som CSV
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "learning_results.csv");
+  link.click();
+}
+
 
 
 
