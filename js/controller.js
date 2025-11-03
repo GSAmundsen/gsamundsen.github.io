@@ -435,17 +435,22 @@ function verifySolution() {
   // Logger resultat til konsollen (for utvikleren)
   console.log(`Scenario ${model.game.currentScenario}: ${isCorrect ? "Riktig" : "Feil"}`);
 
-  // Lagre læringsdata lokalt i nettleseren
-  const data = {
-    id: player.id,
-    knowledge: player.knowledge,
-    result: isCorrect ? 1 : 0,
-    timestamp: new Date().toLocaleString(),
-  };
+ // Lagre læringsdata lokalt i nettleseren
+const data = {
+  id: player.id,
+  scenario: model.game.currentScenario + 1, // legger til scenarionummer
+  knowledge: player.knowledge,
+  result: isCorrect ? 1 : 0,
+  timestamp: new Date().toLocaleString(),
+};
 
-  localStorage.setItem(`learning_${player.id}`, JSON.stringify(data));
-  console.log("Læringsdata lagret:", data);
-}
+// Lagrer resultatet i localStorage
+localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stringify(data));
+console.log("Læringsdata lagret:", data);
+
+// Eksporter automatisk til CSV etter hvert scenario
+exportPlayerProgressToCSV(true);
+
 
 //  STARTSPILL-FUNKSJON 
 // Denne funksjonen kjører når brukeren trykker "Start spill"
@@ -520,6 +525,44 @@ function exportResultsToCSV() {
   link.click();
 }
 
+// === EKSPORTER SPILLERFREMDRIFT TIL CSV ===
+// Denne funksjonen samler all lagret læringsdata (fra localStorage)
+// og laster det automatisk ned som en CSV-fil.
+function exportPlayerProgressToCSV(autoDownload = false) {
+  // Henter alle nøkler som starter med "learning_"
+  const keys = Object.keys(localStorage).filter(k => k.startsWith("learning_"));
+  if (keys.length === 0) {
+    alert("Ingen lagrede spillerdata funnet!");
+    return;
+  }
+
+  // Lager CSV-header (kolonnenavn)
+  let csvContent = "PlayerID,Scenario,Knowledge,Result,Timestamp\n";
+
+  // Legger til data for hver spiller
+  keys.forEach(key => {
+    const data = JSON.parse(localStorage.getItem(key));
+    csvContent += `${data.id},${data.scenario},${data.knowledge},${data.result},${data.timestamp}\n`;
+  });
+
+  // Oppretter CSV-blob (filinnhold)
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  // Lagrer filen lokalt
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", "spiller_fremdrift.csv");
+  document.body.appendChild(link);
+
+  // Hvis autoDownload = true → last ned automatisk etter scenario
+  if (autoDownload) {
+    link.click();
+  }
+
+  document.body.removeChild(link);
+  console.log("💾 CSV-fil generert:", "spiller_fremdrift.csv");
+}
 
 
 
