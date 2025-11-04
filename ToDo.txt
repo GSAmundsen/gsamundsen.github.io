@@ -5,6 +5,16 @@ Thomas; brukte meste parten av helgen min på dette. Prøver å lage en funksjon
 
 - Hvert scenario skal bygge på de forrige. 
 
+Hvert scenario skal bygge på de forrige. 
+
+
+
+
+
+Potential future work:
+- Make a JSON Schema. A formal specification for automated validation.
+    - But that cheks only that the JSON formating is correct. To check the validity of relationships you need to use JS.
+- Commented JSONC example. Shows a complete working example with explanations.
 
 Gerry: - Lage verifiseringsløsning, som sammenligner mellomlagrede tilknytninger, mot de som er lagret i "ScenarioLevels" i modellen.
 Users solution is stored as an Array of transition pairs(array). The required Passenger transitions defined in 

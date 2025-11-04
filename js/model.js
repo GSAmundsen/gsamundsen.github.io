@@ -1,5 +1,3 @@
-// Datamodellen for spillet
-
 let model = {
     settings:{
         selectedBoxColor: 'rgba(171, 224, 224, 0.70)',
@@ -7,10 +5,27 @@ let model = {
         laneBorderColor: 'rgba(99, 99, 99, 1)'
     },
 
-    game: { 
-        currentScenario: 0,    
-    },
+    // Raw JSON data
+    loadedScenarioData: null,
 
+    // Other static properties
+    staticProperties: {
+        canvasBackgroundColor: 'white',
+        selectedBoxColor: 'rgba(171, 224, 224, 1)',
+        normalBoxFill: 'white',
+    },
+    
+    // Information about the current game
+    game: {
+        currentScenario: null,
+        finishedScenarios: [],
+        numberOfScenarios: 0,
+        mainTitle: null,
+        moduleDescription: null,
+        sequential: null,
+        building: null,
+        canvasWidth: 0,
+        canvasHeight: 0,
     canvasProperties: {
         width: window.screen.width*0.80,
         height: window.screen.height*0.5,
@@ -179,10 +194,20 @@ let model = {
             
            ]
     },
-
-]
-
-
-
-
+    
+    // Information about the current scenario
+    currentScenario: {
+        scenarioTitle: null,
+        scenarioDescription: null,
+        tutorialImage: null,
+        failureImage: null,
+        pools: [],
+        lanes: [],
+        staticNodes: [],
+        staticConnectors: [],
+        dynamicNodesInMenu: [],
+        dynamicNodesOnCanvas: [],
+        dynamicConnectors: [],
+        tokens: [],
+    }
 }
