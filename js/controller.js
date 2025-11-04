@@ -53,8 +53,8 @@ function loadQuizResult() {
   console.log("Startnivå fra quiz:", quizScore);
 }
 
-
-function initCanvas() 
+//Gammel initCanvas
+/* function initCanvas() 
 {
     //Henter canvas elementet, laget i view.js, og setter bredde, høyde og farge
     canvas = document.getElementById('BPMNcanvas');
@@ -75,13 +75,14 @@ function initCanvas()
 
     //Laster inn all data, så kaller draw();
     loadScenario();
-}
+} */
 
-function loadScenario(){
+// Maybe not needed
+/* function loadScenario(){
 
 let testResults = []; //List of strings, PASS or FAIL. Index needs to match the corresponding entry in ScenarioPassengerTypes and ScenarioSolutions
 let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket på, slik at vi kan hente ut nodeID, som kan brukes til å slette tilkn.
-
+} */
 
 
 async function initCanvas() 
@@ -106,13 +107,15 @@ async function initCanvas()
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   document.addEventListener('keydown', handleKeyPress);
     // Henter bokser fra modellen...
-    boxes = processBoxes(); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
-    lanes = processLanes();
-    //Setter Passasjer description, er egen funksjon fordi den endres ved verifisering. 
-    setTaskDescription();
+  newScenario();
+  
+  boxes = processBoxes(); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
+  lanes = processLanes();
+  
+  //Setter Passasjer description, er egen funksjon fordi den endres ved verifisering. 
+  setTaskDescription();
 
   // Loads and deploys scenario data
-  newScenario();
 }
 
 // Loads objects from loadedScenarioData into model.game
@@ -191,8 +194,10 @@ function processLanes(){
 
 //Sletter canvas, og tegner opp alt på nytt. Kalles hovedsakelig når musen flyttes (mouseMove())
 function draw() {
+  //Old Draw Functionality
+
   // clear the canvas every update, prevents "drawing" when dragging
-  context.clearRect(0, 0, canvas.width, canvas.height);
+ /*  context.clearRect(0, 0, canvas.width, canvas.height);
 
   drawLanes(lanes); // Passing the processed list of lanes as an argument to the drawLanes function
 
@@ -258,6 +263,25 @@ function draw() {
       context.fillText(box.text, box.x + box.w / 2, box.y + box.h / 2);
     }
   }
+ */
+
+  // Called upon scenario initaition and mouse movement. Deletes the whole canvas and then redraws it.
+
+
+  //New Draw Functionality
+  // clear the canvas every update, prevents "drawing" when dragging
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw order to create correct visual
+  drawPools(model.currentScenario.pools);
+  drawLanes(model.currentScenario.lanes);
+  connectorCoordinates(model.currentScenario.staticConnectors);
+  connectorCoordinates(model.currentScenario.dynamicConnectors);
+  drawNodes(model.currentScenario.staticNodes);
+  drawNodes(model.currentScenario.dynamicNodesInMenu);
+  drawNodes(model.currentScenario.dynamicNodesOnCanvas);
+  drawTemporaryArrow();
+
 }
 
 
@@ -333,7 +357,7 @@ function mouseDown(e) {
     }
   }
   draw(); // Må ha en draw call her for å kunne endre farge kun ved "klikk" og ikke bare "drag".
-}
+
 
 
   // Høyreklikk: start å tegne en pil
@@ -383,6 +407,7 @@ function mouseMove(e) {
   if (connecting && startNode) {
     tempLineEnd = { x: mouseX, y: mouseY };
     draw();
+    drawArrow(startNode.x + startNode.w / 2, startNode.y + startNode.h / 2, mouseX, mouseY);
     return;
   }
 
@@ -390,17 +415,6 @@ function mouseMove(e) {
   if (!draggingBox) return;
   draggingBox.coordinates.x = mouseX - offsetX;
   draggingBox.coordinates.y = mouseY - offsetY;
-  draw();
-}
-
-    drawArrow(startNode.x + startNode.w / 2, startNode.y + startNode.h / 2, mouseX, mouseY);
-    return;
-  }
-
-  // Vanlig flytting av bokser
-  if (!draggingBox) return;
-  draggingBox.x = mouseX - offsetX;
-  draggingBox.y = mouseY - offsetY;
   draw();
 }
 
@@ -431,6 +445,8 @@ function mouseUp(e) {
         }
       }
     }
+
+    
     for (let b of boxes) {
       if (
         mouseX > b.x && mouseX < b.x + b.w &&
@@ -452,9 +468,6 @@ function mouseUp(e) {
     startNode = null;
     draw();
   }
-  draggingBox = null;
-}
-
   draggingBox = null;
 }
 
@@ -576,6 +589,7 @@ function loadScenario(scenario){
     model.currentScenario.lanes.push(lane);
   }
 
+  //Pusher static nodes til Modellen, men hvorfor sette width
   const nodes = scenarioData.static.nodes
   for (let node of nodes) {
     node.static = true;
@@ -592,6 +606,8 @@ function loadScenario(scenario){
 
   const dynamicNodes = scenarioData.dynamic
   let currentRowHeight = model.game.canvasHeight;
+
+  //
   let currentRowWidth = 20;
   const nodeSpacing = 10;
   const maxWidth = model.game.canvasWidth - 40; // Leave margins
@@ -600,10 +616,17 @@ function loadScenario(scenario){
     node.static = false;
     node.width = getNodeWidth(node);
     node.height = 60;
+    model.currentScenario.dynamicNodesInMenu.push(node);
     
     if (currentRowWidth + node.width > maxWidth && currentRowWidth > 20) {
       currentRowHeight += 70;
       currentRowWidth = 20;
+
+
+    }}
+  }
+
+
 //Midlertidig, løsning, trykk "n" for å gå til neste scenario, Delete for å slette connections.
 document.addEventListener('keydown', (event) => {
     if(event.key == "n") {
@@ -635,9 +658,9 @@ function nextScenario(){
     };
     currentRowWidth += node.width + nodeSpacing;
     model.currentScenario.dynamicNodesInMenu.push(node);
+    model.game.canvasHeight = currentRowHeight + 60;
+    canvas.height = model.game.canvasHeight;
   }
-  model.game.canvasHeight = currentRowHeight + 60;
-  canvas.height = model.game.canvasHeight;
 
 
   // for (let node of dynamicNodes) {
@@ -647,7 +670,7 @@ function nextScenario(){
   //   model.currentScenario.dynamicNodesInMenu.push(node);
   // }
   // Current 3:  if building=true: need a section to load in already used nodes and connectors
-}
+
 
 // Loads up end screen
 function endScreen(){
@@ -707,7 +730,7 @@ console.log("Læringsdata lagret:", data);
 
 // Eksporter automatisk til CSV etter hvert scenario
 exportPlayerProgressToCSV(true);
-
+}
 
 //  STARTSPILL-FUNKSJON 
 // Denne funksjonen kjører når brukeren trykker "Start spill"
@@ -881,18 +904,3 @@ function deployScenario() {
 //       }
 // }
 
-// Called upon scenario initaition and mouse movement. Deletes the whole canvas and then redraws it.
-function draw() {
-  // clear the canvas every update, prevents "drawing" when dragging
-  context.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw order to create correct visual
-  drawPools(model.currentScenario.pools);
-  drawLanes(model.currentScenario.lanes);
-  connectorCoordinates(model.currentScenario.staticConnectors);
-  connectorCoordinates(model.currentScenario.dynamicConnectors);
-  drawNodes(model.currentScenario.staticNodes);
-  drawNodes(model.currentScenario.dynamicNodesInMenu);
-  drawNodes(model.currentScenario.dynamicNodesOnCanvas);
-  drawTemporaryArrow();
-}

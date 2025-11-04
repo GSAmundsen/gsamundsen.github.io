@@ -105,6 +105,7 @@ function drawLine(fromX, fromY, toX, toY) {
 // GATEWAY-TEGNING I BPMN-STIL 
 // Disse funksjonene tegner diamantformede noder (gateways) i canvas.
 // Hver gateway-type får et unikt symbol inni diamanten (X, +, eller o).
+}
 
 // Tegner selve diamantformen som gatewayene bygger på
 function drawDiamond(x, y, size, color = "#fff") {
@@ -134,6 +135,7 @@ function drawArrow(x, y, headlen, angle){
 
 // Sent here from draw() to find correct drawing method for type of node
 function drawNodes(nodes = []) {
+  console.log("nodes: "+nodes);
   context.strokeStyle = "black";
   context.lineWidth = 2;
   context.font = "14px Arial";
@@ -203,6 +205,7 @@ function drawGateway(node){
 
 // Tegner selve diamantformen som gatewayene bygger på
 function drawDiamond(node) {
+  console.log("hva er denne noden da: "+node.x)
   const size = node.width;
   const centerX = node.coordinates.x + size / 2;
   const centerY = node.coordinates.y + size / 2;
@@ -214,6 +217,8 @@ function drawDiamond(node) {
   context.lineTo(centerX - size / 2, centerY);
   context.closePath();
   context.fill();
+
+
 // Parallell gateway (AND) 
 // Brukes når flere flyter skal skje samtidig (alle grener kjøres)
 function drawParallelGateway(x, y, size) {
@@ -227,6 +232,7 @@ function drawParallelGateway(x, y, size) {
   context.strokeStyle = "black";
   context.lineWidth = 3;
   context.stroke();
+}
 }
 
 // Inklusiv gateway (OR)

@@ -17,7 +17,7 @@ let model = {
     
     // Information about the current game
     game: {
-        currentScenario: null,
+        currentScenario: null, //Sjekk hvorfor denne skulle være "null", Ellers tror findScenario() at nåværende scenario er ferdig..
         finishedScenarios: [],
         numberOfScenarios: 0,
         mainTitle: null,
@@ -26,6 +26,7 @@ let model = {
         building: null,
         canvasWidth: 0,
         canvasHeight: 0,
+    },
     canvasProperties: {
         width: window.screen.width*0.80,
         height: window.screen.height*0.5,
@@ -193,7 +194,7 @@ let model = {
             [["start", "task2"],["task2","task1"],["task1","end"]]//Eksempel på riktig rekkefølge av noder. Eksempel: Start -> Baggage drop -> Check in -> End.
             
            ]
-    },
+    }],
     
     // Information about the current scenario
     currentScenario: {
