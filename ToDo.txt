@@ -1,8 +1,9 @@
-- Kunne lage linjer mellom bokser, som følger boksene. Tilknyttningene må mellomlagres for verifisering
+- Kunne lage linjer mellom bokser, som følger boksene. Tilknyttningene må mellomlagres for verifisering 
+Thomas; brukte meste parten av helgen min på dette. Prøver å lage en funksjon for å slette koblinger ved å trykke på den, får ta det til uken
 
 - Tegne opp Pool (Airport) men Lanes (Check-in, Security Check?, Gate Area?) i canvas. Vertikal tekst
 
-- Lage verifiseringsløsning, som sammenligner mellomlagrede tilknytninger, mot de som er lagret i "ScenarioLevels" i modellen.
+- Hvert scenario skal bygge på de forrige. 
 
 Hvert scenario skal bygge på de forrige. 
 
@@ -14,3 +15,12 @@ Potential future work:
 - Make a JSON Schema. A formal specification for automated validation.
     - But that cheks only that the JSON formating is correct. To check the validity of relationships you need to use JS.
 - Commented JSONC example. Shows a complete working example with explanations.
+
+Gerry: - Lage verifiseringsløsning, som sammenligner mellomlagrede tilknytninger, mot de som er lagret i "ScenarioLevels" i modellen.
+Users solution is stored as an Array of transition pairs(array). The required Passenger transitions defined in 
+the model.ScenarioLevels.ScenarioSolutions are tested against the users solution, resulting in a PASS if 
+all transitions for that passenger matches, or FAIL if one transition pair is not present in the users solution.
+
+Thomas - Lage startknapp og måte for spillere å legge inn spillerinfo (brukerid som de brukte i quiz)
+
+Thomas - kunne automatisk hente quiz results og registrere dem inn i spillet slik at vi slipper å gjøre det manuelt

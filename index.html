@@ -1,23 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>INFO310 Gruppeoppgave</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <title>INFO310 - BPMN Teaching Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body onload="updateView()">
-    <h1>INFO310 - BPMN Teaching Prototype</h1>
-    <div>Trykk N for neste scenario (midlertidig)</div>
-    <div id="app">
+<body>
+  <h3 style="text-align:center;">INFO310 - BPMN Teaching Prototype</h3>
 
-        <div id="BoxContainer">
+  <!-- === LOGIN SECTION === -->
+  <div id="loginSection" style="text-align:center; margin-bottom:20px;">
+    <p><b>Enter your player ID:</b></p>
 
-        </div>
+    <input type="text" id="initials" maxlength="3" placeholder="Initials (e.g., TS)" style="width:120px; text-transform:uppercase;">
+    <input type="number" id="birthDay" min="1" max="31" placeholder="Day (e.g., 26)" style="width:100px;">
+    <input type="number" id="birthMonth" min="1" max="12" placeholder="Month (e.g., 07)" style="width:100px;">
+
+    <br><br>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <!-- === GAME AREA (hidden until game starts) === -->
+  <div id="app" style="display:none; text-align:center;">
+    <div id="scenarioTextHeader" style="font-weight:bold; margin-bottom:10px;">
+      Scenario description will appear here.
     </div>
 
+    <div id="taskText" style="margin-bottom:10px;">
+      Task results will appear here.
+    </div>
 
+    <canvas id="BPMNcanvas" width="1000" height="500" style="border:1px solid #ccc;"></canvas>
+
+    <div style="margin-top:15px;">
+      <button onclick="testSolution()">✅ Verify Solution</button>
+      <button onclick="nextScenario()">➡️ Next Scenario</button>
+      <button onclick="resetConnections(true)">🗑️ Reset All</button>
+    </div>
+
+    <div id="learningStatus" style="margin-top:15px; font-weight:bold;">
+      Knowledge Level: <span id="knowledgeValue">0.00</span>
+    </div>
+  </div>
+
+  <!-- === JS imports at the very bottom === -->
+  <script src="js/model.js"></script>
+  <script src="js/view.js"></script>
+  <script src="js/drawFunctions.js"></script>
+  <script src="js/controller.js"></script>
 </body>
     <script src="js/model.js"></script>
     <script src="js/dataLoader.js"></script>
