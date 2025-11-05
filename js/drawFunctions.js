@@ -91,10 +91,7 @@ function drawArrow(fromX, fromY, toX, toY) {
 function drawLanes(ls = [])
 {
     if(ls.length == 0){console.log ("No lanes to be drawn"); return} //if the list of lanes is empty, log msg, then do nothing.
-    
     context.strokeStyle = model.settings.laneBorderColor; //Gets the color we're using for the lane border
-
-    
 
     for (l of ls){
         context.strokeRect(l.x, l.y, l.w, l.h);
@@ -103,7 +100,7 @@ function drawLanes(ls = [])
         context.textAlign = "left";
         context.textBaseline = "top";
         
-        context.fillText(l.title, l.x+5, l.y+5);
+        context.fillText(l.name, l.x+5, l.y+5); //slight offset from the top left, so the text doesnt hug the border
        
     }
 

@@ -54,8 +54,13 @@ function loadQuizResult() {
 }
 
 
-function initCanvas() 
+async function initCanvas() 
 {
+  // Loads game data - This needs to be loaded first, before any BMPN Elements are loaded.
+  const scenarioData = await loadScenarioJSON('scenarioData/scenario.json')
+  model.loadedScenarioData = scenarioData; // stores all data loaded from JSON
+  
+  
     //Henter canvas elementet, laget i view.js, og setter bredde, høyde og farge
     canvas = document.getElementById('BPMNcanvas');
     context = canvas.getContext('2d');
@@ -74,20 +79,32 @@ function initCanvas()
     console.log(canvas);
 
     //Laster inn all data, så kaller draw();
+    loadGameData(); //Loads from JSON
     loadScenario();
 }
 
+// Loads objects from loadedScenarioData into model.game
+function loadGameData(){
+  const gameData = model.loadedScenarioData.aboutScenarios;
+  model.game.numberOfScenarios = gameData.numberOfScenarios
+  model.game.moduleTitle = gameData.mainTitle
+  model.game.moduleDescription = gameData.moduleDescription
+
+  //Assign scenario data to ScenarioLevels in model.
+
+  //model.game.sequential = gameData.sequential
+  //model.game.building = gameData.building
+  //model.game.canvasWidth = gameData.canvasSize.width
+  //model.game.canvasHeight = gameData.canvasSize.height
+
+}
+
+
 function loadScenario(){
 
-    //Scenario data fra JSON må lastes inn her.
-
-
-    //Om scenariodata fra JSON IKKE skal lastes inn i modellen, må det endres HVOR systemet henter data fra.
-    //Jeg tenker at aller helst bør man ha en mellomlagring, som enten tar inn JSON data, eller henter fra modellen. 
-    //Så kan systemet bruke denne mellomlagringen som "kilde" for å hente data til view og controller.
-
     //Henter info fra modellen, og oppdaterer view. Her henter den teksten for det nåværende scenarioet
-    document.getElementById('scenarioTextHeader').innerText = model.ScenarioLevels[model.game.currentScenario].scenarioDescription;
+    document.getElementById('moduleTitleHeader').innerText = model.game.moduleTitle;
+    document.getElementById('moduleTextHeader').innerText = model.game.moduleDescription;
 
     // Henter bokser fra modellen...
     boxes = processBoxes(); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
@@ -101,8 +118,11 @@ function loadScenario(){
 
 function setTaskDescription(results = [])
 {
-  let passengerTypes = model.ScenarioLevels[model.game.currentScenario].ScenarioPassengerTypes;
-  let textObject = document.getElementById('taskText');
+  document.getElementById('taskText').innerText = model.loadedScenarioData.scenarios[0].scenarioTitle + "\n" + model.loadedScenarioData.scenarios[0].scenarioDescription
+
+  //A List of all passengers needs, to help the player. 
+  /* let passengerTypes =  // Change this
+  let textObject = document.getElementById('taskVerificationText');
   textObject.innerHTML = "";
 
   for(let i = 0; i < passengerTypes.length; i++)
@@ -113,37 +133,49 @@ function setTaskDescription(results = [])
         `${passengerTypes[i]} - ${(results[i] == "PASS") ? "<span style='color: green;'>PASS</span>" : "<span style='color: red;'>FAIL</span>"} </span> <br>` 
         : textObject.innerHTML += `${passengerTypes[i]} <br>`;
         console.log(results);
-      }
+      } */
 }
 
 
 
 // ...etter å ha kalkulert x posisjon for boksene, basert på antall bokser slik at de spres utover
 function processBoxes(){
-    let boxes = model.ScenarioLevels[model.game.currentScenario].BoxesList; 
+    //let boxes = model.ScenarioLevels[model.game.currentScenario].BoxesList; 
+    let boxes = model.loadedScenarioData.scenarios[0].nodes
+      
     //Spawne bokser i midten av x akse i canvas
-    let centerOffset = boxes.reduce((accumulator, bx) => {return accumulator+bx.w},0) //Går igjennom alle box'ene, og summerer bredde
-    let nextXpos = (canvas.width / 2) - (centerOffset/2); //start X posisjon er halve bredden av canvas, - total lenge av boxer og padding
+    //let centerOffset = boxes.reduce((accumulator, bx) => {return accumulator+bx.w},0) //Går igjennom alle box'ene, og summerer bredde
+    //let nextXpos = (canvas.width / 2) - (centerOffset/2); //start X posisjon er halve bredden av canvas, - total lenge av boxer og padding
+    let nextXpos = canvas.width/3; //Since we dont know the boxes width beforehand, we approximate the start point
 
     for (let i = 0; i < boxes.length; i++) {
         // Gi hver boks en unik ID i formatet "node_N"
         boxes[i].nodeId = `node_${i + 1}`;
 
         // Beregn x-posisjon + padding, basert på bredden av forrige box
-        if(i != 0) {nextXpos+=boxes[i-1].w + 10}
+        //if(i != 0) {nextXpos+=boxes[i-1].w + 10}
 
+        //if(i != 0) {nextXpos+=130}
+
+        //If its an "activity" box... its 120x60, hardcoded 60x60 for everythign else.
+        if(boxes[i].type === "activity") {boxes[i].w = model.game.activityBoxWidth; boxes[i].h = model.game.activityBoxHeight;}
+        else {boxes[i].w = 60; boxes[i].h = 60}
+        
         // Sett x og y posisjon
         boxes[i].x = nextXpos;
-        boxes[i].y = 5;
+        boxes[i].y = canvas.height - 60;
+        
+        nextXpos += boxes[i].w + 10 //The next X position is this box's width, +10 px margin
     } 
     console.log("Boxes processed: ", boxes);
     return boxes;
 } 
 
+
 // Calculates the lane heigh and y position, by the number of lanes in the scenario.
 function processLanes(){
-    let lanes = model.ScenarioLevels[model.game.currentScenario].LanesList; 
-    let laneHeight = canvas.height / lanes.length;
+    let lanes = model.loadedScenarioData.scenarios[0].poolLanes; 
+    let laneHeight = (canvas.height / lanes.length)-20;
 
     for (let i = 0; i < lanes.length; i++) {
         // Sett x og y posisjon
@@ -200,34 +232,38 @@ function draw() {
     }
 
     // Tegn gateway basert på type
-    if (box.type === "gateway_exc") {
+    if (box.type === "xorGateway") {
       drawExclusiveGateway(centerX, centerY, 60); // Eksklusiv (X)
-    } else if (box.type === "gateway_para") {
+    } else if (box.type === "andGateway") {
       drawParallelGateway(centerX, centerY, 60);  // Parallell (+)
-    } else if (box.type === "gateway_inc") {
+    } else if (box.type === "inclusiveGateway") {
       drawInclusiveGateway(centerX, centerY, 60); // Inklusiv (O)
-    } else {
-      // Vanlig rektangulær boks (Task, Start, End, etc.)
-      context.fillRect(box.x, box.y, box.w, box.h);
+    } else if (box.type === "activity"){
+      context.fillRect(box.x, box.y, model.game.activityBoxWidth, model.game.activityBoxHeight);
       context.strokeStyle = "black";
-      context.strokeRect(box.x, box.y, box.w, box.h);
+      context.strokeRect(box.x, box.y, model.game.activityBoxWidth, model.game.activityBoxHeight);
+    } else { //This just leaves Start and End events
+      context.fillRect(box.x, box.y, 60, 60);
+      context.strokeStyle = "black";
+      context.strokeRect(box.x, box.y, 60, 60);
     }
+      
 
     // Tegn tekst på boksen eller rett under gateway 
     context.fillStyle = "black";
-    context.font = "14px Arial";
+    context.font = "11px Arial";
     context.textAlign = "center";
     context.textBaseline = "middle";
 
     //Kaster inn en liten text på Pool her, endre denne. 
-    context.fillText(model.ScenarioLevels[model.game.currentScenario].PoolTitle, 35, canvas.height/2)
+    context.fillText(model.loadedScenarioData.aboutScenarios.poolName, 35, canvas.height/2)
 
-    if (box.type.startsWith("gateway")) {
+    if (box.type.includes("Gateway")) {
       // Plasser teksten litt under gateway-symbolene
-      context.fillText(box.text, centerX, centerY + box.h / 2 + 15);
+      context.fillText(box.name, centerX, centerY + box.h / 2 + 15);
     } else {
       // Plasser teksten midt inni vanlige bokser
-      context.fillText(box.text, box.x + box.w / 2, box.y + box.h / 2);
+      context.fillText(box.name, box.x + box.w / 2, box.y + box.h / 2);
     }
   }
 }
@@ -450,7 +486,7 @@ console.log("Læringsdata lagret:", data);
 
 // Eksporter automatisk til CSV etter hvert scenario
 exportPlayerProgressToCSV(true);
-
+}
 
 //  STARTSPILL-FUNKSJON 
 // Denne funksjonen kjører når brukeren trykker "Start spill"

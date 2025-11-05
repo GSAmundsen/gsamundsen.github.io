@@ -1,0 +1,292 @@
+{
+  "schemaVersion": "1.0",
+  "metadata": {
+    "createdBy": "Przybyslaw S. Paz",
+    "dateCreated": "2025-10-12",
+    "documentVersion": "1.0"
+  },
+  "aboutScenarios": {
+    "mainTitle": "Airport Check-in and Security Process",
+    "moduleDescription": "Learn BPMN by modeling a passenger's journey through airport check-in, security screening, and boarding",
+    "numberOfScenarios": 3,
+    "poolName": "Airport"
+  },
+  
+  "scenarios": [
+    {
+      "scenarioId": 0,
+      "scenarioTitle": "Check-In Process",
+      "scenarioDescription": "Passengers need to check in, and drop off their bags before continuing.",
+      "tokens": [
+        {
+          "tokenId": "token_1",
+          "type": "Passenger",
+          "name": "Thomas",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "Passport": true,
+            "PersonalItems": true
+          }
+        },
+        {
+          "tokenId": "token_2",
+          "type": "Passenger",
+          "name": "Håkon",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "Passport": true,
+            "PersonalItems": true
+          }
+        },
+        {
+          "tokenId": "token_3",
+          "type": "Passenger",
+          "name": "Jonas",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "Passport": true,
+            "PersonalItems": true
+          }
+        },
+        {
+          "tokenId": "token_4",
+          "type": "Passenger",
+          "name": "Synne",
+          "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "Passport": true,
+            "PersonalItems": true
+          }
+        },
+        {
+          "tokenId": "token_5",
+          "type": "Passenger",
+          "name": "Olav",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "Passport": true,
+            "PersonalItems": true
+          }
+        }
+
+      ],
+        "poolLanes": [
+          {
+            "name": "Check-in",
+            "parentPoolId": "pool_1"
+          },
+          {
+            "name": "Security check",
+            "parentPoolId": "pool_1"
+          },
+          {
+            "name": "Waiting for flight",
+            "parentPoolId": "pool_1"
+          }
+        ],
+
+        "nodes": [
+          {
+            "type": "startEvent",
+            "name": "Arrival",
+            "parentPoolId": "pool_1",
+            "parentLaneId": "lane_1"
+          },
+
+          {
+          "type": "activity",
+          "name": "Baggage-drop",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "setkPassengerVariables": {"Luggage": false}
+          },
+          {
+          "type": "xorGateway",
+          "name": "Has luggage",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "checkPassengerVariable": {"Luggage": true}
+        },
+           {
+          "type": "andGateway",
+          "name": "Has luggage",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "checkPassengerVariable": {"Luggage": true}
+        },
+        
+        {
+          "type": "inclusiveGateway",
+          "name": "Can check in",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "checkPassengerVariable": {
+            "Passport": true,
+            "Luggage": false,
+            "CheckedIn": false
+          }
+        },
+
+          {
+            "type": "EndEvent",
+            "name": "To Security",
+            "parentPoolId": "pool_1",
+            "parentLaneId": "lane_1"
+          }
+
+        ],
+
+      
+
+
+
+
+
+
+
+      "dynamic": [
+
+        {
+          "type": "activity",
+          "name": "Luggage drop-off",
+          "nodeId": "node_6",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DropLuggage",
+              "code": "token.Luggage = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Scan boarding card",
+          "nodeId": "node_7",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+              "name": "ScanCard",
+              "code": "token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Wait in line",
+          "nodeId": "node_8",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Prepare for scan of body and personal items",
+          "nodeId": "node_9",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "andGateway",
+          "name": "",
+          "nodeId": "node_10",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Body scan",
+          "nodeId": "node_11",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Personal items scan",
+          "nodeId": "node_12",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "inclusiveGateway",
+          "name": "",
+          "nodeId": "node_13",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Luggage pick-up",
+          "nodeId": "node_14",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Wait for flight",
+          "nodeId": "node_15",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Flight takes off",
+          "nodeId": "node_16",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "endEvent",
+          "name": "",
+          "nodeId": "node_17",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+              "name": "CheckPassport",
+              "code": "token.Passport === true"
+            },
+            {
+              "name": "CheckCheckIn",
+              "code": "token.CheckIn === true"
+            },
+            {
+              "name": "CheckPersonalItems",
+              "code": "token.PersonalItems === true"
+            },
+            {
+              "name": "CheckLuggage",
+              "code": "token.Luggage === false"
+            }
+          ],
+          "amount": 1
+        }
+      ]
+    }
+  ]
+}

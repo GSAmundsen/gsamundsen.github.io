@@ -8,7 +8,13 @@ let model = {
     },
 
     game: { 
-        currentScenario: 0,    
+        currentScenario: 0,
+        moduleTitle: "",
+        moduleDescription: "",
+        activityBoxWidth: 120,
+        activityBoxHeight: 60,
+        gatewayBoxWidth: 60,
+        gatewayBoxHeight: 60
     },
 
     canvasProperties: {
@@ -17,104 +23,12 @@ let model = {
         backgroundColor: 'white'
     },
 
+    loadedScenarioData: null,
+
     //levels of the scenario
     ScenarioLevels: 
     [{
-        scenarioID: 0,// ikke i bruk, enda
-        //Kanskje dele opp passasjerbeskrivelse i lister, tilsvarende ScenarioSolution[], som beskriver riktig tilkn. for hver passasjer
-        scenarioDescription: ` 
-        All Passengers with tickets to go through the Check-in.\n
-        Passengers that have no luggage needs to go to the Baggage Drop first.\n
-        Passengers without passports are rejected.`,
         
-        //boxes in the scenario
-        BoxesList: 
-        [
-            {   x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text:"Start",
-                type: "task"
-            },
-
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 120, h: 60,
-                color: "lightgrey", 
-                text: "Manual Check-in",
-                type: "task"
-            },
-
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 120, h: 60,
-                color: "lightgrey", 
-                text: "Baggage drop",
-                type: "task"
-            },
-
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text: "End",
-                type: "task"
-            },
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text: "",
-                type: "gateway_para"
-            },
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text: "",
-                type: "gateway_inc"
-            },
-            {
-                x:0, y:600, //Trenger denne. x posisjon regnes ut etter antall Tasks
-                w: 60, h: 60,
-                color: "lightgrey", 
-                text: "",
-                type: "gateway_exc"
-            },
-
-            //Neste "boks" i dette scenarioet her..
-        ],
-
-        PoolTitle: "Pool title", // Only using 1 pool for this project.. or else this would be another object. 
-        
-        //Lane sizes and positions are determined automatically (by how many Lanes the scenario has)
-        LanesList:
-        [
-            {
-                x:0, y:0, w:0, h:0,
-                title:"this is the title of the Lane",
-                borderColor: "lightgrey"
-            },
-            {
-                x:0, y:0, w:0, h:0,
-                title:"this is the title of the Lane",
-                borderColor: "lightgrey"
-            },
-            
-            {
-                x:0, y:0, w:0, h:0,
-                title:"this is the title of the Lane",
-                borderColor: "lightgrey"
-            },
-
-        ],
-        ScenarioPassengerTypes: //This needs to match the ScenarioSolution
-        [
-            "All Passengers with tickets to go through the Check-in.",
-            "Passengers that have no luggage needs to go to the Baggage Drop first.",
-            "Passengers without passports are rejected.",
-
-        ],
 
         ScenarioSolution: 
         [//Midlertidig løsning. Liste av riktige tilknytninger mellom "Tasks", som kan brukes til å verifisere brukerens løsning
@@ -180,9 +94,9 @@ let model = {
            ]
     },
 
+    
+
+
 ]
-
-
-
 
 }
