@@ -8,7 +8,7 @@ let draggingBox = null;
 let offsetX = 0;
 let offsetY = 0;
 //mellomlagrer brukerens løsning. I denne foreløpige løsningen, lagres KUN transitions mellom bokser.
-let currentUserSolution = [["start","task1"],["start", "task2"],["task2","task1"],["task1","end"]]; 
+let currentUserSolution = []; 
 // === Globale variabler for koblinger ===
 let connections = []; // {fromId: "node_1", toId: "node_3"}
 let connecting = false;
@@ -116,24 +116,29 @@ function loadScenario(){
     draw()
 }
 
-function setTaskDescription(results = [])
+function setTaskDescription()
 {
   document.getElementById('taskText').innerText = model.loadedScenarioData.scenarios[0].scenarioTitle + "\n" + model.loadedScenarioData.scenarios[0].scenarioDescription
 
-  //A List of all passengers needs, to help the player. 
-  /* let passengerTypes =  // Change this
-  let textObject = document.getElementById('taskVerificationText');
-  textObject.innerHTML = "";
+  let tokens = model.loadedScenarioData.scenarios[model.game.currentScenario].tokens;
+  
+  let verificationTextObject = document.getElementById('taskVerificationText');
+  verificationTextObject.innerHTML = "";
 
-  for(let i = 0; i < passengerTypes.length; i++)
-      {
-        //Om vi har resultater som skal legges til hver linje i PassengerTypes, så legg dette til i HTML koden..
-        (results.length != 0) ? textObject.innerHTML += 
-        //.. Passasjertype beskrivelsen + resultatet. Om resultatet i listen er PASS, skal teksten være grønn, om ikke, så Rød. <br> er linebreak.
-        `${passengerTypes[i]} - ${(results[i] == "PASS") ? "<span style='color: green;'>PASS</span>" : "<span style='color: red;'>FAIL</span>"} </span> <br>` 
-        : textObject.innerHTML += `${passengerTypes[i]} <br>`;
-        console.log(results);
-      } */
+  for(let i = 0; i < tokens.length; i++)
+  {
+      //using explicit true/false, since token.hasPassed can be null, its assigned during verification.
+      if(tokens[i].hasPassed === true) {
+        verificationTextObject.innerHTML += `${tokens[i].name} ${tokens[i].tasksHint} <span style='color: green;'>PASS</span> <br>` 
+      }
+      else if(tokens[i].hasPassed === false){
+        verificationTextObject.innerHTML += `${tokens[i].name} ${tokens[i].tasksHint} <span style='color: red;'>FAIL</span> <br>` 
+      }else{
+        verificationTextObject.innerHTML += `${tokens[i].name} ${tokens[i].tasksHint} <br>`
+      }
+        
+  }
+      
 }
 
 
@@ -386,7 +391,8 @@ function mouseUp(e) {
         // Sjekk om koblingen finnes fra før, +sjekker at koblingen ikke matcher "bakover"
         if (!connections.some(c => (c.fromId === newConn.fromId && c.toId === newConn.toId) || (c.fromId === newConn.toId && c.toId === newConn.fromId))) {
           connections.push(newConn);
-          currentUserSolution.push([newConn.fromId, newConn.toId]);
+          //currentUserSolution.push([newConn.fromId, newConn.toId]);
+          currentUserSolution.push([startNode.task, b.task]); //the users solution uses task, instead of ID, 
           console.log("Ny kobling:", newConn);
         }
       }
@@ -453,11 +459,33 @@ function verifySolution() {
   testResults = [];
   let results = [];
 
-  // Henter korrekt løsning for nåværende scenario
-  let correctSolution = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution;
+
+  //Converting the users solution to strings, storing in a new temp var
+  let userSolution = new Set(currentUserSolution.map(pairs => JSON.stringify(pairs)))
+  console.log(userSolution);
+
+  for (let token of model.loadedScenarioData.scenarios[model.game.currentScenario].tokens)
+  {
+    //If a every element of a tokens requiredTasks exists in the users diagram solution
+    //Stringification helps comparison.
+    if(token.requiredTasks.every(pair => userSolution.has(JSON.stringify(pair))))
+    {
+      console.log(token.name + " Passed");
+      token.hasPassed = true;
+    }else{
+      console.log(token.name + " Failed");
+      token.hasPassed = false;
+    }
+  }
+
+  setTaskDescription() //Oppdaterer status på passasjer beskrivelsen.
+
+  //Læringssystemet
 
   // Sjekker om brukerens løsning er lik den riktige
-  let isCorrect = JSON.stringify(currentUserSolution) === JSON.stringify(correctSolution);
+  //let isCorrect = JSON.stringify(currentUserSolution) === JSON.stringify(correctSolution);
+  let isCorrect = false;
+
 
   // Legger til resultat (1 = riktig, 0 = feil)
   results.push(isCorrect ? 1 : 0);
@@ -485,7 +513,7 @@ localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stri
 console.log("Læringsdata lagret:", data);
 
 // Eksporter automatisk til CSV etter hvert scenario
-exportPlayerProgressToCSV(true);
+//exportPlayerProgressToCSV(true); //Trenger ikke nedlasting under test. 
 }
 
 //  STARTSPILL-FUNKSJON 

@@ -27,7 +27,10 @@
             "Luggage": false,
             "Passport": true,
             "PersonalItems": true
-          }
+          },
+          "tasksHint": "is carrying a large suitcase",
+          "requiredTasks":[["start", "checkLuggage"],["checkLuggage", "dropLuggage"],["dropLuggage", "readyToCheckIn"], ["readyToCheckIn","end"]]
+
         },
         {
           "tokenId": "token_2",
@@ -38,41 +41,11 @@
             "Luggage": true,
             "Passport": true,
             "PersonalItems": true
-          }
-        },
-        {
-          "tokenId": "token_3",
-          "type": "Passenger",
-          "name": "Jonas",
-          "variables": {
-            "CheckIn": false,
-            "Luggage": true,
-            "Passport": true,
-            "PersonalItems": true
-          }
-        },
-        {
-          "tokenId": "token_4",
-          "type": "Passenger",
-          "name": "Synne",
-          "variables": {
-            "CheckIn": true,
-            "Luggage": false,
-            "Passport": true,
-            "PersonalItems": true
-          }
-        },
-        {
-          "tokenId": "token_5",
-          "type": "Passenger",
-          "name": "Olav",
-          "variables": {
-            "CheckIn": false,
-            "Luggage": false,
-            "Passport": true,
-            "PersonalItems": true
-          }
+          },
+          "tasksHint": "is travelling with a small backpack",
+          "requiredTasks":[["start", "checkLuggage"],["checkLuggage", "readyToCheckIn"], ["readyToCheckIn","end"]]
         }
+        
 
       ],
         "poolLanes": [
@@ -94,6 +67,7 @@
           {
             "type": "startEvent",
             "name": "Arrival",
+            "task": "start",
             "parentPoolId": "pool_1",
             "parentLaneId": "lane_1"
           },
@@ -101,20 +75,15 @@
           {
           "type": "activity",
           "name": "Baggage-drop",
+          "task": "dropLuggage",
           "parentPoolId": ["pool_1"],
           "parentLaneId": ["lane_1"],
-          "setkPassengerVariables": {"Luggage": false}
+          "setPassengerVariables": {"Luggage": false}
           },
           {
           "type": "xorGateway",
           "name": "Has luggage",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_1"],
-          "checkPassengerVariable": {"Luggage": true}
-        },
-           {
-          "type": "andGateway",
-          "name": "Has luggage",
+          "task": "checkLuggage",
           "parentPoolId": ["pool_1"],
           "parentLaneId": ["lane_1"],
           "checkPassengerVariable": {"Luggage": true}
@@ -123,6 +92,7 @@
         {
           "type": "inclusiveGateway",
           "name": "Can check in",
+          "task": "readyToCheckIn",
           "parentPoolId": ["pool_1"],
           "parentLaneId": ["lane_1"],
           "checkPassengerVariable": {
@@ -135,6 +105,7 @@
           {
             "type": "EndEvent",
             "name": "To Security",
+            "task": "end",
             "parentPoolId": "pool_1",
             "parentLaneId": "lane_1"
           }
