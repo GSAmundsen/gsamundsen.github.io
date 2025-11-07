@@ -82,8 +82,50 @@ function drawArrow(fromX, fromY, toX, toY) {
 }
 
 
+function drawConnections(){
+   if (Object.keys(connections).length != 0) {
+    for (let c of connections) {
+      const from = boxes.find(b => b.nodeId === c.fromId);
+      const to = boxes.find(b => b.nodeId === c.toId);
+      if (from && to) {
+        drawArrow(
+          from.x + from.w / 2,
+          from.y + from.h / 2,
+          to.x + to.w / 2,
+          to.y + to.h / 2
+        );
+      }
+    }
+  }
+}
 
 
+function drawTaskBox(startX, startY){
+   context.fillRect(startX, startY, model.game.activityBoxWidth, model.game.activityBoxHeight);
+   context.strokeStyle = "black";
+   context.strokeRect(startX, startY, model.game.activityBoxWidth, model.game.activityBoxHeight);
+}
+
+function drawStartEndBoxes(startX, startY){
+    context.fillRect(startX, startY, 60, 60);
+    context.strokeStyle = "black";
+    context.strokeRect(startX, startY, 60, 60);
+}
+
+function drawBoxText(cX, cY, box){
+  context.fillStyle = "black";
+  context.font = "11px Arial";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+
+  if (box.type.includes("Gateway")) {
+    // Plasser teksten litt under gateway-symbolene
+    context.fillText(box.name, cX, cY + box.h / 2 + 15);
+  } else {
+    // Plasser teksten midt inni vanlige bokser
+    context.fillText(box.name, box.x + box.w / 2, box.y + box.h / 2);
+  }
+}
 
 
 
@@ -103,5 +145,11 @@ function drawLanes(ls = [])
         context.fillText(l.name, l.x+5, l.y+5); //slight offset from the top left, so the text doesnt hug the border
        
     }
+}
 
+function drawPoolTitle(){
+  context.font = "16px Arial";
+  context.textAlign = "left";
+  context.textBaseline = "middle";
+  context.fillText(model.loadedScenarioData.aboutScenarios.poolName, 10, canvas.height/2)
 }

@@ -15,7 +15,6 @@ let connecting = false;
 let startNode = null;
 let tempLineEnd = { x: 0, y: 0 };
 
-let testResults = []; //List of strings, PASS or FAIL. Index needs to match the corresponding entry in ScenarioPassengerTypes and ScenarioSolutions
 let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket på, slik at vi kan hente ut nodeID, som kan brukes til å slette tilkn.
 
 // Læringsmåling (BKT)
@@ -60,7 +59,6 @@ async function initCanvas()
   const scenarioData = await loadScenarioJSON('scenarioData/scenario.json')
   model.loadedScenarioData = scenarioData; // stores all data loaded from JSON
   
-  
     //Henter canvas elementet, laget i view.js, og setter bredde, høyde og farge
     canvas = document.getElementById('BPMNcanvas');
     context = canvas.getContext('2d');
@@ -90,13 +88,6 @@ function loadGameData(){
   model.game.moduleTitle = gameData.mainTitle
   model.game.moduleDescription = gameData.moduleDescription
 
-  //Assign scenario data to ScenarioLevels in model.
-
-  //model.game.sequential = gameData.sequential
-  //model.game.building = gameData.building
-  //model.game.canvasWidth = gameData.canvasSize.width
-  //model.game.canvasHeight = gameData.canvasSize.height
-
 }
 
 
@@ -107,7 +98,7 @@ function loadScenario(){
     document.getElementById('moduleTextHeader').innerText = model.game.moduleDescription;
 
     // Henter bokser fra modellen...
-    boxes = processBoxes(); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
+    boxes = boxes.concat(processBoxes()); //henter bokser fra modellen, og kalkulerer x posisjon for boksene
     lanes = processLanes();
     //Setter Passasjer description, er egen funksjon fordi den endres ved verifisering. 
     setTaskDescription();
@@ -118,7 +109,7 @@ function loadScenario(){
 
 function setTaskDescription()
 {
-  document.getElementById('taskText').innerText = model.loadedScenarioData.scenarios[0].scenarioTitle + "\n" + model.loadedScenarioData.scenarios[0].scenarioDescription
+  document.getElementById('taskText').innerText = model.loadedScenarioData.scenarios[model.game.currentScenario].scenarioTitle + "\n" + model.loadedScenarioData.scenarios[model.game.currentScenario].scenarioDescription
 
   let tokens = model.loadedScenarioData.scenarios[model.game.currentScenario].tokens;
   
@@ -143,43 +134,40 @@ function setTaskDescription()
 
 
 
-// ...etter å ha kalkulert x posisjon for boksene, basert på antall bokser slik at de spres utover
+
 function processBoxes(){
-    //let boxes = model.ScenarioLevels[model.game.currentScenario].BoxesList; 
-    let boxes = model.loadedScenarioData.scenarios[0].nodes
+    
+  //Only processes boxes from the current scenario, does nothing with the existing
+    let newBoxes = model.loadedScenarioData.scenarios[model.game.currentScenario].nodes
       
     //Spawne bokser i midten av x akse i canvas
     //let centerOffset = boxes.reduce((accumulator, bx) => {return accumulator+bx.w},0) //Går igjennom alle box'ene, og summerer bredde
     //let nextXpos = (canvas.width / 2) - (centerOffset/2); //start X posisjon er halve bredden av canvas, - total lenge av boxer og padding
     let nextXpos = canvas.width/3; //Since we dont know the boxes width beforehand, we approximate the start point
 
-    for (let i = 0; i < boxes.length; i++) {
+    //Ensures sequential numbering, when adding new boxes.
+    let numberOfExistingBoxesInCanvas = boxes.length;
+    for (let i = 0; i < newBoxes.length; i++) {
         // Gi hver boks en unik ID i formatet "node_N"
-        boxes[i].nodeId = `node_${i + 1}`;
+        newBoxes[i].nodeId = `node_${numberOfExistingBoxesInCanvas + (i+1)}`;
 
-        // Beregn x-posisjon + padding, basert på bredden av forrige box
-        //if(i != 0) {nextXpos+=boxes[i-1].w + 10}
-
-        //if(i != 0) {nextXpos+=130}
-
-        //If its an "activity" box... its 120x60, hardcoded 60x60 for everythign else.
-        if(boxes[i].type === "activity") {boxes[i].w = model.game.activityBoxWidth; boxes[i].h = model.game.activityBoxHeight;}
-        else {boxes[i].w = 60; boxes[i].h = 60}
+        if(newBoxes[i].type === "activity") {newBoxes[i].w = model.game.activityBoxWidth; newBoxes[i].h = model.game.activityBoxHeight;}
+        else {newBoxes[i].w = 60; newBoxes[i].h = 60}
         
         // Sett x og y posisjon
-        boxes[i].x = nextXpos;
-        boxes[i].y = canvas.height - 60;
+        newBoxes[i].x = nextXpos;
+        newBoxes[i].y = canvas.height - 60;
         
-        nextXpos += boxes[i].w + 10 //The next X position is this box's width, +10 px margin
+        nextXpos += newBoxes[i].w + 10 //The next X position is this box's width, +10 px margin
     } 
-    console.log("Boxes processed: ", boxes);
-    return boxes;
+    console.log("Boxes processed: ", newBoxes);
+    return newBoxes;
 } 
 
 
 // Calculates the lane heigh and y position, by the number of lanes in the scenario.
 function processLanes(){
-    let lanes = model.loadedScenarioData.scenarios[0].poolLanes; 
+    let lanes = model.loadedScenarioData.scenarios[model.game.currentScenario].poolLanes; 
     let laneHeight = (canvas.height / lanes.length)-20;
 
     for (let i = 0; i < lanes.length; i++) {
@@ -198,124 +186,95 @@ function processLanes(){
 
 
 
-//Sletter canvas, og tegner opp alt på nytt. Kalles hovedsakelig når musen flyttes (mouseMove())
+//draws all the elements in the Canvas
 function draw() {
   // clear the canvas every update, prevents "drawing" when dragging
   context.clearRect(0, 0, canvas.width, canvas.height);
 
   drawLanes(lanes); // Passing the processed list of lanes as an argument to the drawLanes function
+  drawConnections(); //Draws any connections
 
 
-  // Tegn alle koblinger (piler) mellom bokser først
-  // Dette sikrer at linjene havner "under" boksene
-  if (Object.keys(connections).length != 0) {
-    for (let c of connections) {
-      const from = boxes.find(b => b.nodeId === c.fromId);
-      const to = boxes.find(b => b.nodeId === c.toId);
-      if (from && to) {
-        drawArrow(
-          from.x + from.w / 2,
-          from.y + from.h / 2,
-          to.x + to.w / 2,
-          to.y + to.h / 2
-        );
-      }
-    }
-  }
-
-
-  // Tegn alle bokser og gateways oppå linjene
+  //Draw all the processed boxes first, so they end up "on top of" the connection lines.
   for (let box of boxes) {
     const centerX = box.x + box.w / 2;
     const centerY = box.y + box.h / 2;
 
-    // Sjekk hvilken farge boksen skal ha (markert eller standard) 
+    // The color of the box changes depending on if its selected or not
     if (currentSelectedBox != null && currentSelectedBox.nodeId == box.nodeId) {
       context.fillStyle = model.settings.selectedBoxColor;
     } else {
       context.fillStyle = model.settings.standardBoxColor;
     }
 
-    // Tegn gateway basert på type
+
+    // Draws the correct box (gateway, activity/task or start/end) depending on type
     if (box.type === "xorGateway") {
-      drawExclusiveGateway(centerX, centerY, 60); // Eksklusiv (X)
+      drawExclusiveGateway(centerX, centerY, 60); // Exclusve (X)
     } else if (box.type === "andGateway") {
       drawParallelGateway(centerX, centerY, 60);  // Parallell (+)
     } else if (box.type === "inclusiveGateway") {
-      drawInclusiveGateway(centerX, centerY, 60); // Inklusiv (O)
-    } else if (box.type === "activity"){
-      context.fillRect(box.x, box.y, model.game.activityBoxWidth, model.game.activityBoxHeight);
-      context.strokeStyle = "black";
-      context.strokeRect(box.x, box.y, model.game.activityBoxWidth, model.game.activityBoxHeight);
-    } else { //This just leaves Start and End events
-      context.fillRect(box.x, box.y, 60, 60);
-      context.strokeStyle = "black";
-      context.strokeRect(box.x, box.y, 60, 60);
+      drawInclusiveGateway(centerX, centerY, 60); // Inclusive (O)
+    } else if (box.type === "activity"){ 
+      drawTaskBox(box.x, box.y);// Task/Activity boxes
+    } else { 
+      drawStartEndBoxes(box.x, box.y); //This just leaves Start and End event boxes
     }
       
+    // Adds the text to all boxes, Gateways have their text offset to below their box
+    drawBoxText(centerX, centerY, box)
 
-    // Tegn tekst på boksen eller rett under gateway 
-    context.fillStyle = "black";
-    context.font = "11px Arial";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
+    drawPoolTitle()
+    
 
-    //Kaster inn en liten text på Pool her, endre denne. 
-    context.fillText(model.loadedScenarioData.aboutScenarios.poolName, 35, canvas.height/2)
-
-    if (box.type.includes("Gateway")) {
-      // Plasser teksten litt under gateway-symbolene
-      context.fillText(box.name, centerX, centerY + box.h / 2 + 15);
-    } else {
-      // Plasser teksten midt inni vanlige bokser
-      context.fillText(box.name, box.x + box.w / 2, box.y + box.h / 2);
-    }
   }
 }
 
 
-
-
-
+//Triggered by the user pressing the "delete" key, or pressing the "Reset All" button.
 function resetConnections(resetAll = false) {
   //En liten "override" til en "Reset" knapp, resetAll vil alltid være default False, om den er True sletter den alle koblinger
   if(resetAll == true){
     currentUserSolution = [];
+    connections = [];
     draw();
     return;
   }
 
-  if(Object.keys(connections).length != 0){  //Om det er noen tilkoblinger..
-    if(currentSelectedBox != null){ //og Om vi har valgt en boks...
-      connections = connections.filter(object => { //Siden vi bruker en liste med objecter, sjekker vi om toID eller fromID inneholder "nodeID_X",
-        //.filter() går igjennom alle objektene i en liste, returneres True for et objekt er kommer den med i den "nye" listen, om False, så ikke.
-        console.log("Koblinger til/fra "+ currentSelectedBox.nodeId+ " slettet fra " + object);
-        if(!object.fromId.includes(currentSelectedBox.nodeId) && !object.toId.includes(currentSelectedBox.nodeId))//Om nodeID'en vi ser etter finnes i enten toID eller fromID..
-          {
-            return true;// Om hverken toId eller fromId inneholder "nodeId_x" returneres True, da dette objektet skal være med i listen.
-          }else{return false;} 
-        })
-    }else{//Har vi ikke valgt noen boks, så bare sletter vi siste tilknytningen (objektet) i listen. 
+  // This checks if the selected box has any connections, then deletes those connections.
+  // if no connections are found, we delete the last entry in the connections array instead
+  if(Object.keys(connections).length != 0){  //If there are any connections..
+    if(currentSelectedBox != null){ //..and a box is selected...
+      connections = connections.filter(object => { //..go through the array, and check if nodeObjects toId or fromId contains the selected box' nodeId
+      
+      //if the nodeId we are looking for neither in the fromId, or toId of the current object...
+      if(!object.fromId.includes(currentSelectedBox.nodeId) && !object.toId.includes(currentSelectedBox.nodeId))
+      {
+        return true; //...we keep this box (nodeObject) in the list of connections
+      }else{
+        return false; //..if it is a match, we do not keep it in the connections array, meaning it will not be redrawn in the canvas (which draws connections based on the connection array)
+      } 
+      })
+    }else{// if no box is selected, simply pop and delete the last connection object ({fromId:, toId:}) from the list of connections.
       let lastLine = connections.pop();
       delete connections[lastLine];
-      console.log("Siste kobling slettet");
     }
-  }
+  } 
 
-  //Tegner alt på nytt, siden vi har endrer listene
+  //re draws the canvas, with the updated connections array.
   draw();
 }
 
 
-// Når brukeren trykker ned musen
+// Triggers on mouseClick
 function mouseDown(e) {
   const rect = canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
   
-  currentSelectedBox = null; //Om vi trykker andre steder enn på en boks, så nullstill slik at vi ikke har en boks valgt.
+  currentSelectedBox = null; //If not clicking a box, deselects the selected box.
 
-  // Høyreklikk: start å tegne en pil
+  // right click to start drawing an arror (connection)
   if (e.button === 2) {
     for (let b of boxes) {
       if (
@@ -330,7 +289,7 @@ function mouseDown(e) {
       }
     }
   } else {
-    // Venstreklikk: dra boksen
+    // left click moves the box
     for (let i = boxes.length - 1; i >= 0; i--) {
       const b = boxes[i];
       if (
@@ -338,18 +297,16 @@ function mouseDown(e) {
         mouseY > b.y && mouseY < b.y + b.h
       ) {
         draggingBox = b;
-        currentSelectedBox = b; //Lagrer den siste boksen vi trykket på.
+        currentSelectedBox = b; //stores the last clicked box
         offsetX = mouseX - b.x;
         offsetY = mouseY - b.y;
-
-   
         break;
       }
     }
-    if(currentSelectedBox != null){console.log(currentSelectedBox.nodeId)}; // Testing. Hvilken box.nodeID er trykket på
+    if(currentSelectedBox != null){console.log(currentSelectedBox.nodeId)}; // Testing, last box clicked logged to console.
   }
 
-  draw(); // Må ha en draw call her for å kunne endre farge kun ved "klikk" og ikke bare "drag".
+  draw(); //This draw call is needed to update the selected box, redrawing its color
 }
 
 // Når musen beveges
@@ -391,8 +348,9 @@ function mouseUp(e) {
         // Sjekk om koblingen finnes fra før, +sjekker at koblingen ikke matcher "bakover"
         if (!connections.some(c => (c.fromId === newConn.fromId && c.toId === newConn.toId) || (c.fromId === newConn.toId && c.toId === newConn.fromId))) {
           connections.push(newConn);
+          //The solutions list doesnt need to be created until the solution should be verified.
           //currentUserSolution.push([newConn.fromId, newConn.toId]);
-          currentUserSolution.push([startNode.task, b.task]); //the users solution uses task, instead of ID, 
+          //currentUserSolution.push([startNode.task, b.task]); //the users solution uses task, instead of ID, duplicate set requires duplicate deletion
           console.log("Ny kobling:", newConn);
         }
       }
@@ -421,9 +379,9 @@ document.addEventListener('keydown', (event) => {
 
 //Laster neste scenario
 function nextScenario(){
-    if(model.game.currentScenario < model.ScenarioLevels.length-1){
+    if(model.game.currentScenario < model.ScenarioLevels.length){
         model.game.currentScenario += 1;
-        boxes = processBoxes(); //henter nye bokser fra the nye scenariet.
+        //boxes = processBoxes(); //henter nye bokser fra the nye scenariet.    This is already done in the loadScenario
         loadScenario(); //oppdaterer teksten i view
         draw(); //tegner opp alt på nytt, siden nytt scenario er hentet
     } else {
@@ -437,8 +395,8 @@ function nextScenario(){
 //Viser link til quiz, etter siste scenario
 function showLinkToQuiz(){
     //Viser en alert box med link til quiz
-    document.getElementById('scenarioTextHeader').innerHTML = /*html*/`
-    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">All scenarios completed. Click here to take the quiz.</a>
+    document.getElementById('finishedTextHeader').innerHTML = /*html*/`
+    <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">All scenarios completed<br>Please continue to the last quiz</a>
     
     
   
@@ -456,11 +414,14 @@ function testSolution(){
 // Sjekker brukerens løsning mot riktig løsning (enklere versjon)
 function verifySolution() {
   // Nullstiller tidligere data
-  testResults = [];
   let results = [];
 
+  //creating an array of objects containing "nodeID" and "task" from the nodes in the "boxes" array created earlier
+  let nodeTaskMap = Object.fromEntries(boxes.map(n => [n.nodeId, n.task]));
+  //putting together the users solution, {task, task} to compare with the predefined solution.
+  currentUserSolution = connections.map(task => [nodeTaskMap[task.fromId], nodeTaskMap[task.toId]]); 
 
-  //Converting the users solution to strings, storing in a new temp var
+  //Converting the users solution to strings for comparison, storing in a new temp var
   let userSolution = new Set(currentUserSolution.map(pairs => JSON.stringify(pairs)))
   console.log(userSolution);
 
@@ -541,6 +502,7 @@ function startGame() {
 
   // Laster inn startverdi (quiz-score) og starter spillet
   loadQuizResult();
+
   initCanvas();
 
   // Oppdaterer visning av kunnskapsnivå

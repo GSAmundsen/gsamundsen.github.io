@@ -12,7 +12,8 @@
     "poolName": "Airport"
   },
   
-  "scenarios": [
+  "scenarios": 
+  [
     {
       "scenarioId": 0,
       "scenarioTitle": "Check-In Process",
@@ -52,7 +53,94 @@
           {
             "name": "Check-in",
             "parentPoolId": "pool_1"
+          }
+        ],
+
+        "nodes": [
+          {
+            "type": "startEvent",
+            "name": "Arrival",
+            "task": "start",
+            "parentPoolId": "pool_1",
+            "parentLaneId": "lane_1"
           },
+
+          {
+          "type": "activity",
+          "name": "Baggage-drop",
+          "task": "dropLuggage",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "setPassengerVariables": {"Luggage": false}
+          },
+          {
+          "type": "xorGateway",
+          "name": "Has luggage",
+          "task": "checkLuggage",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "checkPassengerVariable": {"Luggage": true}
+        },
+        
+        {
+          "type": "inclusiveGateway",
+          "name": "Can check in",
+          "task": "readyToCheckIn",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "checkPassengerVariable": {
+            "Passport": true,
+            "Luggage": false,
+            "CheckedIn": false
+          }
+        },
+
+          {
+            "type": "sndEvent",
+            "name": "To Security",
+            "task": "end",
+            "parentPoolId": "pool_1",
+            "parentLaneId": "lane_1"
+          }
+
+        ]
+    },
+    {
+      "scenarioId": 1,
+      "scenarioTitle": "Security Checkpoint",
+      "scenarioDescription": "After dropping of luggage and checking in, passengers should proceed through security",
+      "tokens": [
+        {
+          "tokenId": "token_1",
+          "type": "Passenger",
+          "name": "Thomas",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "Passport": true,
+            "PersonalItems": true
+          },
+          "tasksHint": "is carrying a large suitcase",
+          "requiredTasks":[["start", "checkLuggage"],["checkLuggage", "dropLuggage"],["dropLuggage", "readyToCheckIn"], ["readyToCheckIn","end"]]
+
+        },
+        {
+          "tokenId": "token_2",
+          "type": "Passenger",
+          "name": "Håkon",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "Passport": true,
+            "PersonalItems": true
+          },
+          "tasksHint": "is travelling with a small backpack",
+          "requiredTasks":[["start", "checkLuggage"],["checkLuggage", "readyToCheckIn"], ["readyToCheckIn","end"]]
+        }
+        
+
+      ],
+        "poolLanes": [
           {
             "name": "Security check",
             "parentPoolId": "pool_1"
@@ -103,161 +191,14 @@
         },
 
           {
-            "type": "EndEvent",
+            "type": "sndEvent",
             "name": "To Security",
             "task": "end",
             "parentPoolId": "pool_1",
             "parentLaneId": "lane_1"
           }
 
-        ],
-
-      
-
-
-
-
-
-
-
-      "dynamic": [
-
-        {
-          "type": "activity",
-          "name": "Luggage drop-off",
-          "nodeId": "node_6",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_1"],
-          "functions": [
-            {
-              "name": "DropLuggage",
-              "code": "token.Luggage = false"
-            }
-          ],
-          "amount": 1
-        },
-        {
-          "type": "activity",
-          "name": "Scan boarding card",
-          "nodeId": "node_7",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_2"],
-          "functions": [
-            {
-              "name": "ScanCard",
-              "code": "token.CheckIn === true"
-            }
-          ],
-          "amount": 1
-        },
-        {
-          "type": "activity",
-          "name": "Wait in line",
-          "nodeId": "node_8",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_2"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "activity",
-          "name": "Prepare for scan of body and personal items",
-          "nodeId": "node_9",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_2"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "andGateway",
-          "name": "",
-          "nodeId": "node_10",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_2"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "activity",
-          "name": "Body scan",
-          "nodeId": "node_11",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_2"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "activity",
-          "name": "Personal items scan",
-          "nodeId": "node_12",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_2"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "inclusiveGateway",
-          "name": "",
-          "nodeId": "node_13",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_2"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "activity",
-          "name": "Luggage pick-up",
-          "nodeId": "node_14",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_2"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "activity",
-          "name": "Wait for flight",
-          "nodeId": "node_15",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_3"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "activity",
-          "name": "Flight takes off",
-          "nodeId": "node_16",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_3"],
-          "functions": [],
-          "amount": 1
-        },
-        {
-          "type": "endEvent",
-          "name": "",
-          "nodeId": "node_17",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_3"],
-          "functions": [
-            {
-              "name": "CheckPassport",
-              "code": "token.Passport === true"
-            },
-            {
-              "name": "CheckCheckIn",
-              "code": "token.CheckIn === true"
-            },
-            {
-              "name": "CheckPersonalItems",
-              "code": "token.PersonalItems === true"
-            },
-            {
-              "name": "CheckLuggage",
-              "code": "token.Luggage === false"
-            }
-          ],
-          "amount": 1
-        }
-      ]
+        ]
     }
   ]
 }
