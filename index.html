@@ -24,32 +24,16 @@
 
   <!-- === GAME AREA (hidden until game starts) === -->
   <div id="app" style="display:none; text-align:center;">
-    <div id="scenarioTextHeader" style="font-weight:bold; margin-bottom:10px;">
-      Scenario description will appear here.
-    </div>
 
-    <div id="taskText" style="margin-bottom:10px;">
-      Task results will appear here.
-    </div>
-
-    <canvas id="BPMNcanvas" width="1000" height="500" style="border:1px solid #ccc;"></canvas>
-
-    <div style="margin-top:15px;">
-      <button onclick="testSolution()">✅ Verify Solution</button>
-      <button onclick="nextScenario()">➡️ Next Scenario</button>
-      <button onclick="resetConnections(true)">🗑️ Reset All</button>
-    </div>
-
-    <div id="learningStatus" style="margin-top:15px; font-weight:bold;">
-      Knowledge Level: <span id="knowledgeValue">0.00</span>
-    </div>
+     <!-- udated using view.js -->
   </div>
 
   <!-- === JS imports at the very bottom === -->
   <script src="js/model.js"></script>
-  <script src="js/dataLoader.js"></script>
   <script src="js/view.js"></script>
   <script src="js/drawFunctions.js"></script>
+  <script src="js/dataLoader.js"></script>
+  <script src="js/learningSystem.js"></script>
   <script src="js/controller.js"></script>
 </body>
 </html>
