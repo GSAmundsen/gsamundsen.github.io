@@ -8,7 +8,6 @@
   "aboutScenarios": {
     "mainTitle": "Airport Check-in and Security Process",
     "moduleDescription": "Learn BPMN by modeling a passenger's journey through airport check-in, security screening, and boarding",
-    "numberOfScenarios": 3,
     "poolName": "Airport"
   },
   

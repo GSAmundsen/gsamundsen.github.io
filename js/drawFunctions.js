@@ -1,55 +1,52 @@
-// GATEWAY-TEGNING I BPMN-STIL 
-// Disse funksjonene tegner diamantformede noder (gateways) i canvas.
-// Hver gateway-type får et unikt symbol inni diamanten (X, +, eller o).
+// BPMN Style symbols
+// These functions draw the gateways
 
-// Tegner selve diamantformen som gatewayene bygger på
+// Draws the diamond shape
 function drawDiamond(x, y, size, color = "#fff") {
   context.beginPath();
-  context.moveTo(x, y - size / 2);         // topp-punkt
-  context.lineTo(x + size / 2, y);         // høyre-punkt
-  context.lineTo(x, y + size / 2);         // bunn-punkt
-  context.lineTo(x - size / 2, y);         // venstre-punkt
-  context.closePath();                     // lukker figuren
-  context.fillStyle = color;               // fyllfarge inni diamanten
+  context.moveTo(x, y - size / 2);         // top-point
+  context.lineTo(x + size / 2, y);         // right-point
+  context.lineTo(x, y + size / 2);         // bottom-point
+  context.lineTo(x - size / 2, y);         // left-point
+  context.closePath();                     // closes the figure
+  context.fillStyle = color;               // diamond fill color
   context.fill();
-  context.strokeStyle = "black";           // svart kantlinje
+  context.strokeStyle = "black";           // black border
   context.lineWidth = 2;
   context.stroke();
 }
 
+// Every gateway type gets a symbol within the diamond shape.
 // Parallell gateway (AND) 
-// Brukes når flere flyter skal skje samtidig (alle grener kjøres)
 function drawParallelGateway(x, y, size) {
-  drawDiamond(x, y, size, context.fillStyle);         // tegn diamant +// Uses the current fillstyle. Selected or normal color
+  drawDiamond(x, y, size, context.fillStyle); // Draws a basic diamond, using the current fillstyle
   context.beginPath();
-  // Tegner et pluss-tegn (+) inni diamanten
-  context.moveTo(x - size / 4, y);         // horisontal strek
+  // Draws the + sign within the diamond
+  context.moveTo(x - size / 4, y);         // horisontal line
   context.lineTo(x + size / 4, y);
-  context.moveTo(x, y - size / 4);         // vertikal strek
+  context.moveTo(x, y - size / 4);         // vertical line
   context.lineTo(x, y + size / 4);
   context.strokeStyle = "black";
   context.lineWidth = 3;
   context.stroke();
 }
 
-// Inklusiv gateway (OR)
-// Brukes når en eller flere flyter kan aktiveres samtidig
+// Inclusive gateway (OR)
 function drawInclusiveGateway(x, y, size) {
-  drawDiamond(x, y, size,  context.fillStyle);         // tegn diamant
+  drawDiamond(x, y, size,  context.fillStyle);         // draw diamond
   context.beginPath();
-  // Tegner en liten sirkel inni diamanten
+  // Draws the O within the diamond
   context.arc(x, y, size / 5, 0, Math.PI * 2);
   context.strokeStyle = "black";
   context.lineWidth = 2;
   context.stroke();
 }
 
-// Eksklusiv gateway (XOR) 
-// Brukes når bare én vei kan tas (enten/eller)
+// Exclusive gateway (XOR) 
 function drawExclusiveGateway(x, y, size) {
-  drawDiamond(x, y, size,  context.fillStyle);         // tegn diamant
+  drawDiamond(x, y, size,  context.fillStyle);         // draw diamond
   context.beginPath();
-  // Tegner en X inni diamanten
+  // Draws the X within the diamond
   context.moveTo(x - size / 4, y - size / 4);
   context.lineTo(x + size / 4, y + size / 4);
   context.moveTo(x + size / 4, y - size / 4);
@@ -59,6 +56,8 @@ function drawExclusiveGateway(x, y, size) {
   context.stroke();
 }
 
+
+//Draws the line and arrow on connector lines
 function drawArrow(fromX, fromY, toX, toY) {
   const headlen = 10;
   const dx = toX - fromX;
@@ -71,47 +70,53 @@ function drawArrow(fromX, fromY, toX, toY) {
   context.lineWidth = 2;
   context.stroke();
 
-  // Tegn pilspiss
+  // Draws the arrowhead at the calculated mid-point of the line, for readability in complex diagrams
+  let middleX = (fromX + toX) / 2;
+  let middleY = (fromY + toY) / 2;
   context.beginPath();
-  context.moveTo(toX, toY);
-  context.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
-  context.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+  context.moveTo(middleX, middleY);
+  context.lineTo(middleX - headlen * Math.cos(angle - Math.PI / 6), middleY - headlen * Math.sin(angle - Math.PI / 6));
+  context.lineTo(middleX - headlen * Math.cos(angle + Math.PI / 6), middleY - headlen * Math.sin(angle + Math.PI / 6));
   context.closePath();
   context.fillStyle = "blue";
   context.fill();
 }
 
 
+//calls the drawArrow function for all connecting lines in the connections list
 function drawConnections(){
    if (Object.keys(connections).length != 0) {
     for (let c of connections) {
       const from = boxes.find(b => b.nodeId === c.fromId);
       const to = boxes.find(b => b.nodeId === c.toId);
       if (from && to) {
-        drawArrow(
+          drawArrow(
           from.x + from.w / 2,
           from.y + from.h / 2,
           to.x + to.w / 2,
           to.y + to.h / 2
-        );
+          );
       }
     }
   }
 }
 
 
+//draws the task/activity box
 function drawTaskBox(startX, startY){
    context.fillRect(startX, startY, model.game.activityBoxWidth, model.game.activityBoxHeight);
    context.strokeStyle = "black";
    context.strokeRect(startX, startY, model.game.activityBoxWidth, model.game.activityBoxHeight);
 }
 
+//draws the start and end boxes
 function drawStartEndBoxes(startX, startY){
     context.fillRect(startX, startY, 60, 60);
     context.strokeStyle = "black";
     context.strokeRect(startX, startY, 60, 60);
 }
 
+//draws the text inside or below the boxes, depending on type
 function drawBoxText(cX, cY, box){
   context.fillStyle = "black";
   context.font = "11px Arial";
@@ -119,23 +124,22 @@ function drawBoxText(cX, cY, box){
   context.textBaseline = "middle";
 
   if (box.type.includes("Gateway")) {
-    // Plasser teksten litt under gateway-symbolene
+    // Places the text slightly below the gateways, because of the gateway symbols
     context.fillText(box.name, cX, cY + box.h / 2 + 15);
   } else {
-    // Plasser teksten midt inni vanlige bokser
+    // Task boxes has their text inside the box
     context.fillText(box.name, box.x + box.w / 2, box.y + box.h / 2);
   }
 }
 
-
-
-
+//Draws each lane defined in the scenario
 function drawLanes(ls = [])
 {
     if(ls.length == 0){console.log ("No lanes to be drawn"); return} //if the list of lanes is empty, log msg, then do nothing.
-    context.strokeStyle = model.settings.laneBorderColor; //Gets the color we're using for the lane border
+    context.strokeStyle = model.settings.laneBorderColor; //Sets the color we're using for the lane border
 
-    for (l of ls){
+    //draws each lane on the canvas
+    for (let l of ls){
         context.strokeRect(l.x, l.y, l.w, l.h);
         context.fillStyle = "black";
         context.font = "14px Arial";
@@ -143,10 +147,10 @@ function drawLanes(ls = [])
         context.textBaseline = "top";
         
         context.fillText(l.name, l.x+5, l.y+5); //slight offset from the top left, so the text doesnt hug the border
-       
     }
 }
 
+// draws the title text of the pool
 function drawPoolTitle(){
   context.font = "16px Arial";
   context.textAlign = "left";

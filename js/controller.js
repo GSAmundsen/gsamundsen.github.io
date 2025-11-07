@@ -3,63 +3,32 @@ let canvas = null;
 let context = null;
 let boxes = [];
 let lanes = [];
-//Globale variabler som brukes til å holde styr på hvilken boks som dras, og offset for å få riktig posisjon
+
+//Global vars to help with dragging boxes
 let draggingBox = null;
 let offsetX = 0;
 let offsetY = 0;
+
+let currentSelectedBox = null; // Used to store the last clicked box
+
 //mellomlagrer brukerens løsning. I denne foreløpige løsningen, lagres KUN transitions mellom bokser.
 let currentUserSolution = []; 
-// === Globale variabler for koblinger ===
+
+// === Global vars for connections ===
 let connections = []; // {fromId: "node_1", toId: "node_3"}
 let connecting = false;
 let startNode = null;
 let tempLineEnd = { x: 0, y: 0 };
 
-let currentSelectedBox = null; // Brukes til å lagre siste boksen vi trykket på, slik at vi kan hente ut nodeID, som kan brukes til å slette tilkn.
-
-// Læringsmåling (BKT)
-
-// Spillerobjekt – brukes til å knytte resultater til en bestemt bruker
-let player = {
-  id: "",          // ID (initialer + dato, f.eks. TS2607)
-  knowledge: 0.0   // Kunnskapsnivå, oppdateres via BKT
-};
-
-// Enkel versjon av Bayesian Knowledge Tracing (BKT)
-class BKT {
-  constructor(start = 0.3, learn = 0.2) {
-    this.P = start;    // Startnivå (fra quiz eller antatt)
-    this.learn = learn; // Hvor raskt spilleren lærer
-  }
-
-  // Oppdaterer sannsynligheten for læring basert på om spilleren gjør riktig eller feil
-  update(isCorrect) {
-    this.P = isCorrect
-      ? this.P + (1 - this.P) * this.learn   // Øker hvis riktig
-      : this.P * (1 - this.learn / 2);       // Minker litt hvis feil
-    return this.P;
-  }
-}
-
-// Opprett en standard BKT-instans
-let learner = new BKT();
-
-// Midlertidig funksjon for å simulere et quiz-resultat (kan kobles til faktisk quiz senere)
-function loadQuizResult() {
-  let quizScore = 0.6; // Eksempel: 60 % riktig
-  player.knowledge = quizScore;
-  learner = new BKT(quizScore);
-  console.log("Startnivå fra quiz:", quizScore);
-}
 
 
 async function initCanvas() 
 {
-  // Loads game data - This needs to be loaded first, before any BMPN Elements are loaded.
+  // Loads game data - This needs to be loaded first, before any BMPN Elements
   const scenarioData = await loadScenarioJSON('scenarioData/scenario.json')
   model.loadedScenarioData = scenarioData; // stores all data loaded from JSON
   
-    //Henter canvas elementet, laget i view.js, og setter bredde, høyde og farge
+    //Gets the canvas element, laget i view.js, og setter bredde, høyde og farge
     canvas = document.getElementById('BPMNcanvas');
     context = canvas.getContext('2d');
     context.canvas.width = model.canvasProperties.width;
@@ -67,12 +36,15 @@ async function initCanvas()
     context.fillStyle = model.canvasProperties.backgroundColor;
     context.fillRect(0, 0, model.canvasProperties.width, model.canvasProperties.height);
 
+    //Adds key listeners,
     // Legger til listeners, slik at funksjoner blir kalt ved musehendelser ('intern event systemet henter', funksjonen som skal kalles)
     canvas.addEventListener('mousedown', mouseDown);
     canvas.addEventListener('mousemove', mouseMove);
     canvas.addEventListener('mouseup', mouseUp); 
 
-    canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+    canvas.addEventListener("contextmenu", (e) => e.preventDefault()); //prevents context menu when right clicking (creating connections)
+
+    document.addEventListener('keydown', (e) => {if(e.key == 'Delete'){ resetConnections(); }});
 
     console.log(canvas);
 
@@ -127,36 +99,30 @@ function setTaskDescription()
       }else{
         verificationTextObject.innerHTML += `${tokens[i].name} ${tokens[i].tasksHint} <br>`
       }
-        
   }
-      
 }
 
 
-
-
+//This function takes the tasks/activity and gateways from the JSON, and sets a nodeId, and the start position of each box on the canvas
 function processBoxes(){
     
   //Only processes boxes from the current scenario, does nothing with the existing
-    let newBoxes = model.loadedScenarioData.scenarios[model.game.currentScenario].nodes
-      
-    //Spawne bokser i midten av x akse i canvas
-    //let centerOffset = boxes.reduce((accumulator, bx) => {return accumulator+bx.w},0) //Går igjennom alle box'ene, og summerer bredde
-    //let nextXpos = (canvas.width / 2) - (centerOffset/2); //start X posisjon er halve bredden av canvas, - total lenge av boxer og padding
-    let nextXpos = canvas.width/3; //Since we dont know the boxes width beforehand, we approximate the start point
+  let newBoxes = model.loadedScenarioData.scenarios[model.game.currentScenario].nodes
+  let nextXpos = canvas.width/3; //Since we dont know the boxes width beforehand, we approximate the start point
 
-    //Ensures sequential numbering, when adding new boxes.
-    let numberOfExistingBoxesInCanvas = boxes.length;
-    for (let i = 0; i < newBoxes.length; i++) {
-        // Gi hver boks en unik ID i formatet "node_N"
-        newBoxes[i].nodeId = `node_${numberOfExistingBoxesInCanvas + (i+1)}`;
+  //Ensures sequential numbering, when adding new boxes.
+  let numberOfExistingBoxesInCanvas = boxes.length;
+  for (let i = 0; i < newBoxes.length; i++) {
+      // each box gets a unique nodeId
+      newBoxes[i].nodeId = `node_${numberOfExistingBoxesInCanvas + (i+1)}`;
 
-        if(newBoxes[i].type === "activity") {newBoxes[i].w = model.game.activityBoxWidth; newBoxes[i].h = model.game.activityBoxHeight;}
-        else {newBoxes[i].w = 60; newBoxes[i].h = 60}
+      //Sets the widht and height of each box
+      if(newBoxes[i].type === "activity") {newBoxes[i].w = model.game.activityBoxWidth; newBoxes[i].h = model.game.activityBoxHeight;}
+      else {newBoxes[i].w = 60; newBoxes[i].h = 60}
         
-        // Sett x og y posisjon
+      // Sets the x and y position on the canvas
         newBoxes[i].x = nextXpos;
-        newBoxes[i].y = canvas.height - 60;
+        newBoxes[i].y = canvas.height - 95;
         
         nextXpos += newBoxes[i].w + 10 //The next X position is this box's width, +10 px margin
     } 
@@ -168,7 +134,7 @@ function processBoxes(){
 // Calculates the lane heigh and y position, by the number of lanes in the scenario.
 function processLanes(){
     let lanes = model.loadedScenarioData.scenarios[model.game.currentScenario].poolLanes; 
-    let laneHeight = (canvas.height / lanes.length)-20;
+    let laneHeight = ((canvas.height-100) / lanes.length); //Leaving a 100px gap at the bottom for tasks/gateways
 
     for (let i = 0; i < lanes.length; i++) {
         // Sett x og y posisjon
@@ -309,13 +275,13 @@ function mouseDown(e) {
   draw(); //This draw call is needed to update the selected box, redrawing its color
 }
 
-// Når musen beveges
+// When the mouse is moves
 function mouseMove(e) {
   const rect = canvas.getBoundingClientRect();
   const mouseX = e.clientX - rect.left;
   const mouseY = e.clientY - rect.top;
 
-  // Hvis vi tegner en pil
+  // if drawing an arrow
   if (connecting && startNode) {
     tempLineEnd = { x: mouseX, y: mouseY };
     draw();
@@ -323,15 +289,17 @@ function mouseMove(e) {
     return;
   }
 
-  // Vanlig flytting av bokser
+  // Moving a box
   if (!draggingBox) return;
   draggingBox.x = mouseX - offsetX;
   draggingBox.y = mouseY - offsetY;
   draw();
 }
 
-// Når musen slippes
+// when mouse button is released
 function mouseUp(e) {
+
+  //If we are making a connection (holding RMB)
   if (connecting && startNode) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
@@ -344,13 +312,10 @@ function mouseUp(e) {
         b !== startNode
       ) {
         const newConn = { fromId: startNode.nodeId, toId: b.nodeId };
-
-        // Sjekk om koblingen finnes fra før, +sjekker at koblingen ikke matcher "bakover"
+        
+        //Check if the connection already exists, or if the reverse exists, preventing it.
         if (!connections.some(c => (c.fromId === newConn.fromId && c.toId === newConn.toId) || (c.fromId === newConn.toId && c.toId === newConn.fromId))) {
           connections.push(newConn);
-          //The solutions list doesnt need to be created until the solution should be verified.
-          //currentUserSolution.push([newConn.fromId, newConn.toId]);
-          //currentUserSolution.push([startNode.task, b.task]); //the users solution uses task, instead of ID, duplicate set requires duplicate deletion
           console.log("Ny kobling:", newConn);
         }
       }
@@ -365,56 +330,33 @@ function mouseUp(e) {
 }
 
 
-//Midlertidig, løsning, trykk "n" for å gå til neste scenario, Delete for å slette connections.
-document.addEventListener('keydown', (event) => {
-    if(event.key == "n") {
-        nextScenario();
-    }
-    if(event.key == 'Delete'){
-      resetConnections();
-    }
-  
-  });
-
-
-//Laster neste scenario
+//Loads the next scenario
 function nextScenario(){
-    if(model.game.currentScenario < model.ScenarioLevels.length){
+    if(model.game.currentScenario < model.loadedScenarioData.scenarios.length-1){
         model.game.currentScenario += 1;
-        //boxes = processBoxes(); //henter nye bokser fra the nye scenariet.    This is already done in the loadScenario
-        loadScenario(); //oppdaterer teksten i view
-        draw(); //tegner opp alt på nytt, siden nytt scenario er hentet
+        loadScenario(); //updates the task text for the new scenario
+        draw();
     } else {
-        //Om det ikke er flere scenario, lag en alert box
-        //alert("Ikke flere scenarioer!");
+        //If there are no more scenarios.
         showLinkToQuiz();
         
     }
 }
 
-//Viser link til quiz, etter siste scenario
+//We use this to point the user to the exit-quiz. For learning measurement
 function showLinkToQuiz(){
     //Viser en alert box med link til quiz
     document.getElementById('finishedTextHeader').innerHTML = /*html*/`
     <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">All scenarios completed<br>Please continue to the last quiz</a>
-    
-    
-  
-    
     `; 
 }
-//Midlertidig, funksjon for å teste løsning i console.
-function testSolution(){
-    console.log("Brukerens løsning: ", currentUserSolution,"\n\n Prøver å verifisere løsning...");
-    verifySolution();
-}
 
-
-
-// Sjekker brukerens løsning mot riktig løsning (enklere versjon)
+// Compares the users solution against the corrent solution (from the JSON)
 function verifySolution() {
   // Nullstiller tidligere data
-  let results = [];
+  let results = []; // Hva brukes results[] til..
+  let allTokensCorrect;
+
 
   //creating an array of objects containing "nodeID" and "task" from the nodes in the "boxes" array created earlier
   let nodeTaskMap = Object.fromEntries(boxes.map(n => [n.nodeId, n.task]));
@@ -432,54 +374,30 @@ function verifySolution() {
     if(token.requiredTasks.every(pair => userSolution.has(JSON.stringify(pair))))
     {
       console.log(token.name + " Passed");
-      token.hasPassed = true;
+      token.hasPassed = true; // This attribute is added/altered and used by the setTaskDescription to give feedback to the user (Pass/Fail)
+      results.push(token.hasPassed ? 1 : 0); //This is used by the BKT learning system
     }else{
       console.log(token.name + " Failed");
-      token.hasPassed = false;
+      token.hasPassed = false; // This attribute is added/altered and used by the setTaskDescription to give feedback to the user (Pass/Fail)
+        results.push(token.hasPassed ? 1 : 0); //This is used by the BKT learning system
     }
   }
 
-  setTaskDescription() //Oppdaterer status på passasjer beskrivelsen.
+  //If every token was correct, if one failed, the learning system takes it as failed.
+  allTokensCorrect = model.loadedScenarioData.scenarios[model.game.currentScenario].tokens.every(tkn => tkn.hasPassed == true );
 
-  //Læringssystemet
-
-  // Sjekker om brukerens løsning er lik den riktige
-  //let isCorrect = JSON.stringify(currentUserSolution) === JSON.stringify(correctSolution);
-  let isCorrect = false;
-
-
-  // Legger til resultat (1 = riktig, 0 = feil)
-  results.push(isCorrect ? 1 : 0);
-
-  // Oppdaterer spillerens kunnskapsnivå (BKT)
-  if (typeof learner !== "undefined") {
-    player.knowledge = learner.update(isCorrect);
-    console.log(`Oppdatert kunnskapsnivå: ${player.knowledge.toFixed(2)}`);
-  }
-
-  // Logger resultat til konsollen (for utvikleren)
-  console.log(`Scenario ${model.game.currentScenario}: ${isCorrect ? "Riktig" : "Feil"}`);
-
- // Lagre læringsdata lokalt i nettleseren
-const data = {
-  id: player.id,
-  scenario: model.game.currentScenario + 1, // legger til scenarionummer
-  knowledge: player.knowledge,
-  result: isCorrect ? 1 : 0,
-  timestamp: new Date().toLocaleString(),
-};
-
-// Lagrer resultatet i localStorage
-localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stringify(data));
-console.log("Læringsdata lagret:", data);
-
-// Eksporter automatisk til CSV etter hvert scenario
-//exportPlayerProgressToCSV(true); //Trenger ikke nedlasting under test. 
+  setTaskDescription() //Updates the status of the task description, feedback to user, (pass / fail)
+  updateLearning(allTokensCorrect);
 }
+
 
 //  STARTSPILL-FUNKSJON 
 // Denne funksjonen kjører når brukeren trykker "Start spill"
 function startGame() {
+
+  updateView();
+
+
   // Hent verdier fra input-feltene
   const initials = document.getElementById("initials").value.trim().toUpperCase();
   const day = document.getElementById("birthDay").value.trim().padStart(2, "0");
@@ -508,87 +426,5 @@ function startGame() {
   // Oppdaterer visning av kunnskapsnivå
   updateLearningDisplay();
 }
-
-// OPPDATERER KUNNSKAPSNIVÅ I VISNINGEN 
-function updateLearningDisplay() {
-  const val = document.getElementById("knowledgeValue");
-  if (val && player) val.textContent = player.knowledge.toFixed(2);
-}
-
-// OPPDATER VISNINGEN ETTER HVER VERIFISERING 
-// Denne "wrapper" verifySolution slik at kunnskapsnivået oppdateres automatisk etter brukeren sjekker løsningen
-const gammelVerify = verifySolution;
-verifySolution = function () {
-  gammelVerify();
-  updateLearningDisplay();
-};
-
-// EKSPORTER ALLE RESULTATER TIL CSV 
-// Denne funksjonen samler alle "learning_*"-elementer i localStorage
-// og lagrer dem i en .csv-fil som lastes ned i nettleseren
-function exportResultsToCSV() {
-  // Samle alle nøkler som starter med "learning_"
-  const keys = Object.keys(localStorage).filter(k => k.startsWith("learning_"));
-  if (keys.length === 0) {
-    alert("no learnigndata found!");
-    return;
-  }
-
-  // Bygg CSV-header og rader
-  let csvContent = "PlayerID,Knowledge,Result,Timestamp\n";
-
-  keys.forEach(key => {
-    const data = JSON.parse(localStorage.getItem(key));
-    csvContent += `${data.id},${data.knowledge},${data.result},${data.timestamp}\n`;
-  });
-
-  // Lag en Blob (datafil) og last den ned som CSV
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "learning_results.csv");
-  link.click();
-}
-
-// === EKSPORTER SPILLERFREMDRIFT TIL CSV ===
-// Denne funksjonen samler all lagret læringsdata (fra localStorage)
-// og laster det automatisk ned som en CSV-fil.
-function exportPlayerProgressToCSV(autoDownload = false) {
-  // Henter alle nøkler som starter med "learning_"
-  const keys = Object.keys(localStorage).filter(k => k.startsWith("learning_"));
-  if (keys.length === 0) {
-    alert("Ingen lagrede spillerdata funnet!");
-    return;
-  }
-
-  // Lager CSV-header (kolonnenavn)
-  let csvContent = "PlayerID,Scenario,Knowledge,Result,Timestamp\n";
-
-  // Legger til data for hver spiller
-  keys.forEach(key => {
-    const data = JSON.parse(localStorage.getItem(key));
-    csvContent += `${data.id},${data.scenario},${data.knowledge},${data.result},${data.timestamp}\n`;
-  });
-
-  // Oppretter CSV-blob (filinnhold)
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
-  // Lagrer filen lokalt
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "spiller_fremdrift.csv");
-  document.body.appendChild(link);
-
-  // Hvis autoDownload = true → last ned automatisk etter scenario
-  if (autoDownload) {
-    link.click();
-  }
-
-  document.body.removeChild(link);
-  console.log("💾 CSV-fil generert:", "spiller_fremdrift.csv");
-}
-
 
 
