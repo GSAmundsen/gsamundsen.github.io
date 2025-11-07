@@ -4,20 +4,27 @@
 function updateView() {
     
     document.getElementById('app').innerHTML = /*html*/`
-    <div style="justify-items: center;">
-    <div style="display: block; width: 40%; text-align:left; border: 2px solid grey;  box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.75);"><h4 id="scenarioTextHeader"></h4>
-    <p id="taskText"></p>
     
+    <div id="moduleTitleHeader" style="font-weight:bold;">Scenario title will appear here.</div>
+    <div id="moduleTextHeader" style="font-style: italic; margin-bottom:20px;">Scenario description will appear here.</div>
+    <div id="finishedTextHeader" style="font-weight: bold; font-size: 20px; margin-bottom:20px;"></div>
+    <div id="taskText" style="margin-bottom:10px; margin-left: 20%; text-align: left; font-weight: bold;">Task description will appear here.</div>
+    <div id="taskVerificationText" style="margin-bottom:10px;margin-left: 20%; text-align: left;">Task results will appear here.</div>
+
+
+    <canvas id="BPMNcanvas" width="1000" height="500" style="border:1px solid #ccc;"></canvas>
+    <div style="margin-top:15px;">
+      <button onclick="verifySolution()">✅ Verify Solution</button>
+      <button onclick="nextScenario()">➡️ Next Scenario</button>
+      <button onclick="resetConnections(true)">🗑️ Reset All</button>
     </div>
-    <div style="display: block; border: 2px solid grey;  box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.75);margin-top: 1%;">
-    <canvas id="BPMNcanvas"></canvas>
+
+    <div id="learningStatus" style="margin-top:15px; font-weight:bold;">
+      Knowledge Level: <span id="knowledgeValue">0.00</span>
     </div>
-    <div> <button style="height: 50px; width: 150px; margin-top: 30px" onclick="testSolution()">Verify Solution</button> </div>
-    </div>
-  
-    
+
     `; 
-    initCanvas();
+    //initCanvas();
     //createBoxes();
     
 
