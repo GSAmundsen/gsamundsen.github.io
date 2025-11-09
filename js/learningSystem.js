@@ -59,7 +59,7 @@ console.log("Læringsdata lagret:", data);
 
 
 // Eksporter automatisk til CSV etter hvert scenario
-exportPlayerProgressToCSV(true); //Trenger ikke nedlasting under test. 
+//exportPlayerProgressToCSV(true); //Trenger ikke nedlasting under test. 
 }
 
 

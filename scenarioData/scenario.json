@@ -44,6 +44,19 @@
           },
           "tasksHint": "is travelling with a small backpack",
           "requiredTasks":[["start", "checkLuggage"],["checkLuggage", "readyToCheckIn"], ["readyToCheckIn","end"]]
+        },
+        {
+          "tokenId": "token_3",
+          "type": "Passenger",
+          "name": "Silje",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "Passport": true,
+            "PersonalItems": true
+          },
+          "tasksHint": "is travelling with a small backpack, and large suitcase",
+          "requiredTasks":[["start", "checkLuggage"],["checkLuggage", "dropLuggage"],["dropLuggage", "readyToCheckIn"], ["readyToCheckIn","end"]]
         }
         
 
@@ -95,7 +108,7 @@
         },
 
           {
-            "type": "sndEvent",
+            "type": "endEvent",
             "name": "To Security",
             "task": "end",
             "parentPoolId": "pool_1",
@@ -107,9 +120,9 @@
     {
       "scenarioId": 1,
       "scenarioTitle": "Security Checkpoint",
-      "scenarioDescription": "After dropping of luggage and checking in, passengers should proceed through security",
+      "scenarioDescription": "While most passengers only require a basic security check, some passengers are selected for a more thorough search.",
       "tokens": [
-        {
+         {
           "tokenId": "token_1",
           "type": "Passenger",
           "name": "Thomas",
@@ -119,8 +132,19 @@
             "Passport": true,
             "PersonalItems": true
           },
-          "tasksHint": "is carrying a large suitcase",
-          "requiredTasks":[["start", "checkLuggage"],["checkLuggage", "dropLuggage"],["dropLuggage", "readyToCheckIn"], ["readyToCheckIn","end"]]
+          "tasksHint": "forgot to leave his pocket knife at home",
+          "requiredTasks":
+          [
+            ["end", "xRayAndMetalDetector"],
+            ["xRayAndMetalDetector", "securityMetalDetector"], 
+            ["xRayAndMetalDetector","securityXray"],
+            ["securityXray","securityAdditional"],          
+            ["securityMetalDetector","securityAdditional"],
+            ["securityAdditional","securityBodyScan"],
+            ["securityBodyScan","securityComplete"],
+            ["securityComplete","end"]
+          ]
+            
 
         },
         {
@@ -133,65 +157,123 @@
             "Passport": true,
             "PersonalItems": true
           },
-          "tasksHint": "is travelling with a small backpack",
-          "requiredTasks":[["start", "checkLuggage"],["checkLuggage", "readyToCheckIn"], ["readyToCheckIn","end"]]
+          "tasksHint": "carries a bottle of wine, and a laptop in their backpack.",
+          "requiredTasks":
+          [
+            ["end", "xRayAndMetalDetector"],
+            ["xRayAndMetalDetector", "securityMetalDetector"], 
+            ["xRayAndMetalDetector","securityXray"],
+            ["securityXray","securityAdditional"],          
+            ["securityMetalDetector","securityAdditional"],
+            ["securityAdditional","securityComplete"],
+            ["securityComplete","end"]
+          ]
+
+        },
+        {
+          "tokenId": "token_3",
+          "type": "Passenger",
+          "name": "Silje",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "Passport": true,
+            "PersonalItems": true
+          },
+          "tasksHint": "is nervously looking around..",
+          "requiredTasks":
+          [
+            ["end", "xRayAndMetalDetector"],
+            ["xRayAndMetalDetector", "securityMetalDetector"], 
+            ["xRayAndMetalDetector","securityXray"],
+            ["securityXray","securityAdditional"],          
+            ["securityMetalDetector","securityAdditional"],
+            ["securityAdditional","securityComplete"],
+            ["securityComplete","end"]
+          ]
         }
+        
         
 
       ],
         "poolLanes": [
           {
-            "name": "Security check",
+            "name": "Check-in",
             "parentPoolId": "pool_1"
           },
           {
-            "name": "Waiting for flight",
+            "name": "Security check",
             "parentPoolId": "pool_1"
           }
         ],
 
         "nodes": [
-          {
-            "type": "startEvent",
-            "name": "Arrival",
-            "task": "start",
-            "parentPoolId": "pool_1",
-            "parentLaneId": "lane_1"
-          },
 
-          {
+          
+           {
           "type": "activity",
-          "name": "Baggage-drop",
-          "task": "dropLuggage",
+          "name": "Carry-on X-ray",
+          "task": "securityXray",
           "parentPoolId": ["pool_1"],
           "parentLaneId": ["lane_1"],
           "setPassengerVariables": {"Luggage": false}
           },
+
           {
-          "type": "xorGateway",
-          "name": "Has luggage",
-          "task": "checkLuggage",
-          "parentPoolId": ["pool_1"],
-          "parentLaneId": ["lane_1"],
-          "checkPassengerVariable": {"Luggage": true}
-        },
-        
-        {
-          "type": "inclusiveGateway",
-          "name": "Can check in",
-          "task": "readyToCheckIn",
+          "type": "andGateway",
+          "name": "Basic Security Check",
+          "task": "xRayAndMetalDetector",
           "parentPoolId": ["pool_1"],
           "parentLaneId": ["lane_1"],
           "checkPassengerVariable": {
             "Passport": true,
             "Luggage": false,
             "CheckedIn": false
-          }
-        },
+            }
+          },
 
           {
-            "type": "sndEvent",
-            "name": "To Security",
+          "type": "activity",
+          "name": "Metal Detector",
+          "task": "securityMetalDetector",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "setPassengerVariables": {"Luggage": false}
+          },
+
+          {
+          "type": "activity",
+          "name": "Additional Body Scan",
+          "task": "securityBodyScan",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "setPassengerVariables": {"Luggage": false}
+          },
+
+          {
+          "type": "xorGateway",
+          "name": "Additional Check Required?",
+          "task": "securityAdditional",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "checkPassengerVariable": {"Luggage": true}
+        },
+
+
+          {
+          "type": "xorGateway",
+          "name": "Security Check Complete",
+          "task": "securityComplete",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "checkPassengerVariable": {"Luggage": true}
+        },
+        
+
+
+          {
+            "type": "endEvent",
+            "name": "To Amenities",
             "task": "end",
             "parentPoolId": "pool_1",
             "parentLaneId": "lane_1"
