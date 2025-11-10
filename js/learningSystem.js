@@ -113,7 +113,6 @@ function verifySolution() {
   console.log("Læringsdata lagret lokalt:", data);
 
   // SENDER TIL GOOGLE SHEETS 
-  // Bytt ut lenken nedenfor med din egen "Web App URL" fra Google Apps Script
   const scriptURL = "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
 
   fetch(scriptURL, {
