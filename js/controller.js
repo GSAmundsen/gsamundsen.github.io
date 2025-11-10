@@ -28,8 +28,8 @@ async function initCanvas()
   // Prepares canvas element
   canvas = document.getElementById('BPMNcanvas');
   context = canvas.getContext('2d');
-  context.canvas.width = model.game.canvasWidth;
-  context.canvas.height = model.game.canvasHeight;
+  context.canvas.width = model.campaign.canvasWidth;
+  context.canvas.height = model.campaign.canvasHeight;
   context.fillStyle = model.staticProperties.canvasBackgroundColor;
   context.fillRect(0, 0, context.canvas.width, context.canvas.height);
 
@@ -44,16 +44,18 @@ async function initCanvas()
   newScenario();
 }
 
-// Loads objects from loadedScenarioData into model.game
+// Loads objects from loadedScenarioData into model.campaign
 function loadGameData(){
-  const gameData = model.loadedScenarioData.aboutScenarios;
-  model.game.numberOfScenarios = gameData.numberOfScenarios
-  model.game.mainTitle = gameData.mainTitle
-  model.game.moduleDescription = gameData.moduleDescription
-  model.game.sequential = gameData.sequential
-  model.game.building = gameData.building
-  model.game.canvasWidth = gameData.canvasSize.width
-  model.game.canvasHeight = gameData.canvasSize.height
+  const gameData = model.loadedScenarioData.aboutCampaign;
+  model.campaign.numberOfScenarios = gameData.numberOfScenarios;
+  model.campaign.mainTitle = gameData.mainTitle;
+  model.campaign.moduleDescription = gameData.moduleDescription;
+  model.campaign.sequential = gameData.sequential;
+  model.campaign.building = gameData.building;
+  model.campaign.canvasWidth = gameData.canvasSize.width;
+  model.campaign.canvasHeight = gameData.canvasSize.height;
+  model.campaign.followUpCampaign = gameData.followUpCampaign;
+  model.campaign.endScreenText = gameData.endScreenText;
 }
 
 // Når brukeren trykker ned musen
@@ -94,7 +96,7 @@ function mouseDown(e) {
       }
     }
   }
-  draw(); // Må ha en draw call her for å kunne endre farge kun ved "klikk" og ikke bare "drag".
+  draw();
 }
 
 // Når musen beveges
@@ -118,38 +120,107 @@ function mouseMove(e) {
 }
 
 // Når musen slippes
+// When mouse is released (finishing a connection)
 function mouseUp(e) {
   if (connecting && startNode) {
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const allNodes = getNodes()
-    const allConnectors = getConnectors()
+    const allNodes = getNodes();
+    const allConnectors = getConnectors();
+
     for (let node of allNodes) {
-      if (
-        mouseX > node.coordinates.x && mouseX < node.coordinates.x + node.width &&
-        mouseY > node.coordinates.y && mouseY < node.coordinates.y + node.height &&      
-        node !== startNode
-      ) {
-        // Future 2: only works if resetConnections fixes sequentiallity of connectors upon deletion...
-        const connector_id = `connector_${allConnectors.length}`
+      const withinNode =
+        mouseX > node.coordinates.x &&
+        mouseX < node.coordinates.x + node.width &&
+        mouseY > node.coordinates.y &&
+        mouseY < node.coordinates.y + node.height;
 
-        // Future 1: Currently hardcoded type selection, will need to be changed once we implement more connector types
-        const newConn = { type: 'sequenceFlow', connectorId: connector_id, fromNodeId: startNode.nodeId, toNodeId: node.nodeId };
+      // Make sure we're connecting to a different node
+      if (withinNode && node !== startNode) {
+        // === Create new connector object ===
+        const connector_id = `connector_${allConnectors.length + 1}`;
+        const newConn = {
+          type: "sequenceFlow",
+          connectorId: connector_id,
+          fromNodeId: startNode.nodeId,
+          toNodeId: node.nodeId,
+        };
 
-        // Sjekk om koblingen finnes fra før, +sjekker at koblingen ikke matcher "bakover"
-        if (!allConnectors.some(c => (c.fromId === newConn.fromNodeId && c.toId === newConn.toNodeId) || (c.fromId === newConn.toNodeId && c.toId === newConn.fromNodeId))) {
-          model.currentScenario.dynamicConnectors.push(newConn);
+        switch (startNode.type) {
+      
+          case "xorGateway": {
+            startNode.nodeConnections = startNode.nodeConnections || [];
+
+            if (startNode.nodeConnections.length >= 2) {
+              break;
+            }
+
+            const conditionFlag = startNode.nodeConnections.length === 0 ? true : false;
+
+            startNode.nodeConnections.push({
+              connectorId: connector_id,
+              condition: conditionFlag,
+            });
+
+            model.currentScenario.dynamicConnectors.push(newConn);
+            break;
+          }
+
+          case "andGateway": {
+            startNode.nodeConnections = startNode.nodeConnections || [];
+            startNode.nodeConnections.push({ connectorId: connector_id });
+            model.currentScenario.dynamicConnectors.push(newConn);
+            break;
+          }
+
+          case "orGateway": {
+            startNode.nodeConnections = startNode.nodeConnections || [];
+            startNode.functions = startNode.functions || [];
+
+            const index = startNode.nodeConnections.length;
+
+            if (index >= startNode.functions.length) {
+              break;
+            }
+
+            startNode.nodeConnections.push({
+              connectorId: connector_id,
+              functionIndex: index,
+            });
+
+            model.currentScenario.dynamicConnectors.push(newConn);
+            break;
+          }
+
+          default: {
+            const exists = allConnectors.some(
+              (c) =>
+                (c.fromNodeId === newConn.fromNodeId &&
+                  c.toNodeId === newConn.toNodeId) ||
+                (c.fromNodeId === newConn.toNodeId &&
+                  c.toNodeId === newConn.fromNodeId)
+            );
+
+            if (!exists) {
+              model.currentScenario.dynamicConnectors.push(newConn);
+            }
+            break;
+          }
         }
       }
     }
+
+    // Cleanup after drawing
     connecting = false;
     startNode = null;
     draw();
   }
+
   draggingBox = null;
 }
+
 
 function mouseLeave(e) {
   draggingBox = null;
@@ -196,7 +267,7 @@ function resetConnections(resetAll = false) {
 
 // Comes from initCanvas or "n" and deploys scenario
 function newScenario(){
-  model.game.canvasHeight = model.loadedScenarioData.aboutScenarios.canvasSize.height
+  model.campaign.canvasHeight = model.loadedScenarioData.aboutCampaign.canvasSize.height
   const scenario = findScenario();
   loadScenario(scenario);
   if (scenario !== -1) {
@@ -207,25 +278,25 @@ function newScenario(){
 // Finds the current scenario to run using model.finishedScenarios and model.numberOfScenarios
 function findScenario(){
   // If there is a current scenario it is marked as finished
-  if (model.game.currentScenario !== null) {
-    model.game.finishedScenarios.push(model.game.currentScenario);
+  if (model.campaign.currentScenario !== null) {
+    model.campaign.finishedScenarios.push(model.campaign.currentScenario);
   }
 
   // Check if all scenarios are completed
-  if (model.game.finishedScenarios.length >= model.game.numberOfScenarios){
+  if (model.campaign.finishedScenarios.length >= model.campaign.numberOfScenarios){
     return -1;
   }
 
   // Sequential mode: next scenario in order
-  if (model.game.sequential){
-    return model.game.finishedScenarios.length;
+  if (model.campaign.sequential){
+    return model.campaign.finishedScenarios.length;
   }
 
   // Non-sequential: pick random unfinished scenario
   let availableScenarios = []
-  for (let i = 0; i < model.game.numberOfScenarios; i++) {
+  for (let i = 0; i < model.campaign.numberOfScenarios; i++) {
     const scenarioId = `scenario_${i}`
-    if (!model.game.finishedScenarios.includes(scenarioId)) {
+    if (!model.campaign.finishedScenarios.includes(scenarioId)) {
       availableScenarios.push(i);
     }
   }
@@ -239,13 +310,15 @@ function loadScenario(scenario){
   // If game is over sends player to final screen
   console.log(scenario);
   if (scenario === -1) {
+    context.clearRect(0, 0, canvas.width, canvas.height);
     endScreen();
     return;
   }
-  model.game.currentScenario = scenario;
+  model.campaign.currentScenario = scenario;
   // Preserves old scenario data if scenarios are building then wipes currentScenario clean
-  if (model.game.building === true) {
+  if (model.campaign.building === true) {
     const lastScenario = model.currentScenario
+    // Pull out dynamic nodes on canvas and connectors + static nodes
   }
   resetCurrentScenario();
 
@@ -263,17 +336,17 @@ function loadScenario(scenario){
     model.currentScenario.tokens.push(token);
   }
 
-  const pools = scenarioData.static.pools
+  const pools = scenarioData.static.pools || [];
   for (let pool of pools) {
     model.currentScenario.pools.push(pool);
   }
 
-  const lanes = scenarioData.static.lanes
+  const lanes = scenarioData.static.lanes || [];
   for (let lane of lanes) {
     model.currentScenario.lanes.push(lane);
   }
 
-  const nodes = scenarioData.static.nodes
+  const nodes = scenarioData.static.nodes || [];
   for (let node of nodes) {
     node.static = true;
     node.width = getNodeWidth(node);
@@ -281,17 +354,20 @@ function loadScenario(scenario){
     model.currentScenario.staticNodes.push(node);
   }
 
-  const connectors = scenarioData.static.connectors
+  const connectors = scenarioData.static.connectors || [];
   for (let connector of connectors) {
     connector.static = true;
     model.currentScenario.staticConnectors.push(connector);
   }
 
-  const dynamicNodes = scenarioData.dynamic
-  let currentRowHeight = model.game.canvasHeight;
+  const dynamicNodes = scenarioData.dynamic || [];
+  // Here is where you have a sorting function to find which nodes are staying if building
+  // Once those are sorted you immediately also sort out the connections you need to keep
+
+  let currentRowHeight = model.campaign.canvasHeight;
   let currentRowWidth = 20;
   const nodeSpacing = 10;
-  const maxWidth = model.game.canvasWidth - 40; // Leave margins
+  const maxWidth = model.campaign.canvasWidth - 40; // Leave margins
   
   for (let node of dynamicNodes) {
     node.static = false;
@@ -309,21 +385,19 @@ function loadScenario(scenario){
     currentRowWidth += node.width + nodeSpacing;
     model.currentScenario.dynamicNodesInMenu.push(node);
   }
-  model.game.canvasHeight = currentRowHeight + 60;
-  canvas.height = model.game.canvasHeight;
+  model.campaign.canvasHeight = currentRowHeight + 60;
+  canvas.height = model.campaign.canvasHeight;
+
+  // Now you load in the previously existing nodes on canvas and then the connectors
 
 
-  // for (let node of dynamicNodes) {
-  //   node.static = false;
-  //   node.width = getNodeWidth(node);
-  //   node.height = 60;
-  //   model.currentScenario.dynamicNodesInMenu.push(node);
-  // }
   // Current 3:  if building=true: need a section to load in already used nodes and connectors
 }
 
 // Loads up end screen
 function endScreen(){
+    // Current x: implement it showing teh endScreenText and a button asking whether you want to load nextCampaign(if there is one)
+
     //Viser en alert box med link til quiz
     document.getElementById('scenarioTextHeader').innerHTML = /*html*/`
     <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank">All scenarios completed. Click here to take the quiz.</a>
@@ -377,7 +451,7 @@ function deployScenario() {
 // function setTaskDescription(results = [])
 // {
 //   let tokenTypes = mod
-//   let passengerTypes = model.ScenarioLevels[model.game.currentScenario].ScenarioPassengerTypes;
+//   let passengerTypes = model.ScenarioLevels[model.campaign.currentScenario].ScenarioPassengerTypes;
 //   let textObject = document.getElementById('taskText');
 //   textObject.innerHTML = "";
 

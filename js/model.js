@@ -9,18 +9,24 @@ let model = {
         selectedBoxColor: 'rgba(171, 224, 224, 1)',
         normalBoxFill: 'white',
     },
+
+    operationalVariables: {
+        buidlingNodes: [],
+    },
     
     // Information about the current game
-    game: {
+    campaign: {
         currentScenario: null,
         finishedScenarios: [],
         numberOfScenarios: 0,
         mainTitle: null,
-        moduleDescription: null,
+        campaignDescription: null,
         sequential: null,
         building: null,
         canvasWidth: 0,
         canvasHeight: 0,
+        followUpCampaign: null,
+        endScreenText: null,
     },
     
     // Information about the current scenario

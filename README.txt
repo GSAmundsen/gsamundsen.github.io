@@ -51,9 +51,9 @@ Functions use JavaScript code strings. here are the currently supported patterns
     - `documentVersion` (string, required): Document version number
 
 
-- `aboutScenarios` (object, required): Global scenario settings
+- `aboutCampaign` (object, required): Global campaign settings
     - `mainTitle` (string, required): Title shown to user
-    - `moduleDescription` (string, required): Description of overall scenario
+    - `campaignDescription` (string, required): Description of overall scenario
     - `numberOfScenarios` (integer, required): Total count of scenarios
         - Must match actual array length
     - `sequential` (boolean, required): Whether scenarios must be presented and completed in order
@@ -66,10 +66,15 @@ Functions use JavaScript code strings. here are the currently supported patterns
     - `canvasSize` (object, required): Canvas dimensions in pixels
         - `width` (integer): Width in pixels (default: 1200) 
         - `height` (integer): Height in pixels (default: 800)
+    - `followUpCampaign` (string, optional): Path to next campaign
+        - Relative path from project root
+        - Supported formats: JSON
+    - `endScreenText` (string, optional): Text player sees after finishing campaign
 
 
 - `scenarios` (array, required): List of scenario objects
     - Minimum 1 scenario required
+    - Minimum 1 startEvent and 1 endEvent required. These are used by the verifier.
     - Each scenario object contains:
         - `scenarioId` (string, required): Unique identifier
             - Format: `"scenario_N"` where N is the number

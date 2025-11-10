@@ -5,6 +5,9 @@ function updateView() {
     
     document.getElementById('app').innerHTML = /*html*/`
     <div><h2 id="scenarioTextHeader"></h2></div>
+    <div id="scenarioButtons">
+                <button id="verifyButton" onclick="verifier()">Verify Solution</button>
+            </div>
     <canvas id="BPMNcanvas"></canvas>
     
   

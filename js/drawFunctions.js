@@ -37,30 +37,57 @@ function drawLanes(lanes = [])
 
 // Finds connector coordinates then send it to draw connector line
 function connectorCoordinates(connectors = []) {
-  
-  const allNodes = getNodes()
+  const allNodes = getNodes();
 
   for (const connector of connectors) {
     const fromNode = allNodes.find(n => n.nodeId === connector.fromNodeId);
     const toNode = allNodes.find(n => n.nodeId === connector.toNodeId);
 
-    if (fromNode && toNode) {
-      const fromX = fromNode.coordinates.x + fromNode.width / 2;
-      const fromY = fromNode.coordinates.y + fromNode.height / 2;
-      const toX = toNode.coordinates.x + toNode.width / 2;
-      const toY = toNode.coordinates.y + toNode.height / 2;
-      
-      drawLine(fromX, fromY, toX, toY)
-      const headlen = 10;
-      const dx = toX - fromX;
-      const dy = toY - fromY;
-      const angle = Math.atan2(dy, dx);
-      const middleX = (fromX + toX) / 2
-      const middleY = (fromY + toY) / 2
-      drawArrow(middleX, middleY, headlen, angle)
+    if (!fromNode || !toNode) continue;
+
+    const fromX = fromNode.coordinates.x + fromNode.width / 2;
+    const fromY = fromNode.coordinates.y + fromNode.height / 2;
+    const toX = toNode.coordinates.x + toNode.width / 2;
+    const toY = toNode.coordinates.y + toNode.height / 2;
+
+    const middleX = (fromX + toX) / 2;
+    const middleY = (fromY + toY) / 2;
+
+    let lineColor = "blue";
+    let labelText = null;
+
+    // === XOR gateway special coloring ===
+    if (fromNode.type === "xorGateway" && Array.isArray(fromNode.nodeConnections)) {
+      const connData = fromNode.nodeConnections.find(c => c.connectorId === connector.connectorId);
+      if (connData) {
+        if (connData.condition === true) lineColor = "green";
+        else if (connData.condition === false) lineColor = "red";
+      }
     }
+
+    // === OR gateway function labels ===
+    if (fromNode.type === "orGateway" && Array.isArray(fromNode.nodeConnections)) {
+      const connData = fromNode.nodeConnections.find(c => c.connectorId === connector.connectorId);
+      if (connData && typeof connData.functionIndex === "number") {
+        const fn = fromNode.functions?.[connData.functionIndex];
+        if (fn?.name) labelText = fn.name;
+      }
+    }
+
+    // Draw connector line + arrow with color
+    drawLine(fromX, fromY, toX, toY, lineColor);
+    const headlen = 10;
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const angle = Math.atan2(dy, dx);
+    drawArrow(middleX, middleY, headlen, angle, lineColor);
+    drawArrow(toX, toY, headlen, angle, lineColor);
+
+    // Draw label text (for OR gateway)
+    if (labelText) drawConnectorLabel(labelText, middleX, middleY, angle, lineColor);
   }
 }
+
 
 // Finds connector coordinates for connector being drawn then sends it to be drawn
 function drawTemporaryArrow() {
@@ -97,25 +124,47 @@ function getConnectors() {
   ];
 }
 // Draws connector line
-function drawLine(fromX, fromY, toX, toY) {
+function drawLine(fromX, fromY, toX, toY, lineColor) {
   context.beginPath();
   context.moveTo(fromX, fromY);
   context.lineTo(toX, toY);
-  context.strokeStyle = "blue";
+  context.strokeStyle = lineColor;
   context.lineWidth = 2;
   context.stroke();
 }
 
-// Draws arrow head on connector lines
-function drawArrow(x, y, headlen, angle){
+function drawArrow(x, y, headlen, angle, lineColor) {
   context.beginPath();
   context.moveTo(x, y);
   context.lineTo(x - headlen * Math.cos(angle - Math.PI / 6), y - headlen * Math.sin(angle - Math.PI / 6));
   context.lineTo(x - headlen * Math.cos(angle + Math.PI / 6), y - headlen * Math.sin(angle + Math.PI / 6));
   context.closePath();
-  context.fillStyle = "blue";
+  context.fillStyle = lineColor;
   context.fill();
 }
+
+function drawConnectorLabel(text, x, y, angle, color = "black") {
+  context.save();
+
+  // Move the origin to the text point (middle of line)
+  context.translate(x, y);
+  // Rotate to match connector angle
+  context.rotate(angle);
+
+  // Style
+  context.font = "12px Arial";
+  context.fillStyle = color;
+  context.textAlign = "center";
+  context.textBaseline = "top"; // keeps text below the line
+
+  // Slight offset down from the line (so it doesn’t overlap)
+  const offset = 10;
+  context.fillText(text, 0, offset);
+
+  context.restore();
+}
+
+
 
 // Sent here from draw() to find correct drawing method for type of node
 function drawNodes(nodes = []) {

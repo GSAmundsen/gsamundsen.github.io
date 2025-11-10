@@ -1,0 +1,1707 @@
+{
+  "schemaVersion": "1.0",
+  "metadata": {
+    "createdBy": "ppa007",
+    "dateCreated": "2025-01-10",
+    "documentVersion": "1.0"
+  },
+  "aboutCampaign": {
+    "mainTitle": "Learn BPMN: Airport Operations",
+    "campaignDescription": "Master BPMN concepts by building an airport process model step-by-step",
+    "numberOfScenarios": 5,
+    "sequential": true,
+    "building": true,
+    "canvasSize": {
+      "width": 1200,
+      "height": 800
+    }
+  },
+  "scenarios": [
+    {
+      "scenarioId": "scenario_1",
+      "scenarioTitle": "Level 1: Check-in Area",
+      "scenarioDescription": "Set up the check-in area for passenger processing and luggage handling",
+      "tokens": [
+        {
+          "tokenId": "token_1",
+          "type": "Passenger",
+          "name": "Alice",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true
+          }
+        },
+        {
+          "tokenId": "token_2",
+          "type": "Passenger",
+          "name": "Bob",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": false
+          }
+        }
+      ],
+      "static": {
+        "pools": [
+          {
+            "poolId": "pool_1",
+            "name": "Airport",
+            "coordinates": {"x": 50, "y": 50},
+            "size": {"width": 1100, "height": 700}
+          }
+        ],
+        "lanes": [
+          {
+            "laneId": "lane_1",
+            "name": "Outside Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 100},
+            "size": {"width": 1000, "height": 700}
+          }
+        ],
+        "nodes": [],
+        "connectors": []
+      },
+      "dynamic": [
+        {
+          "type": "startEvent",
+          "name": "Arrival",
+          "nodeId": "node_1",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Check-in = True?",
+          "nodeId": "node_2",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "CheckInStatus",
+              "code": "token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Check-in",
+          "nodeId": "node_3",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DoCheckIn",
+              "code": "token.CheckIn = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Luggage = True?",
+          "nodeId": "node_4",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "LuggageCheck",
+              "code": "token.Luggage === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Luggage drop-off",
+          "nodeId": "node_5",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DropLuggage",
+              "code": "token.Luggage = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "endEvent",
+          "name": "To security",
+          "nodeId": "node_6",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+                "name": "CheckPassanger",
+                "code": "token.Luggage === false && token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "scenarioId": "scenario_2",
+      "scenarioTitle": "Level 2: Security Check",
+      "scenarioDescription": "Add security screening with boarding card and luggage scanning",
+      "tokens": [
+        {
+            "tokenId": "token_1",
+            "type": "Passenger",
+            "name": "Alice",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false
+            }
+        },
+        {
+            "tokenId": "token_2",
+            "type": "Passenger",
+            "name": "Bob",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false
+            }
+        },
+        {
+            "tokenId": "token_3",
+            "type": "Passenger",
+            "name": "Charlie",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false
+            }
+        },
+        {
+            "tokenId": "token_4",
+            "type": "Passenger",
+            "name": "Diana",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false
+            }
+        },
+        {
+            "tokenId": "token_5",
+            "type": "Passenger",
+            "name": "Erik",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false
+            }
+        },
+        {
+            "tokenId": "token_6",
+            "type": "Passenger",
+            "name": "Fiona",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false
+            }
+        },
+        {
+            "tokenId": "token_7",
+            "type": "Passenger",
+            "name": "George",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false
+            }
+        },
+        {
+            "tokenId": "token_8",
+            "type": "Passenger",
+            "name": "Hannah",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false
+            }
+        }
+        ],
+      "static": {
+        "pools": [
+          {
+            "poolId": "pool_1",
+            "name": "Airport",
+            "coordinates": {"x": 50, "y": 50},
+            "size": {"width": 1100, "height": 700}
+          }
+        ],
+        "lanes": [
+          {
+            "laneId": "lane_1",
+            "name": "Outside Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 450},
+            "size": {"width": 1000, "height": 350}
+          },
+          {
+            "laneId": "lane_2",
+            "name": "Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 100},
+            "size": {"width": 1000, "height": 350}
+          }
+        ],
+        "nodes": [],
+        "connectors": []
+      },
+      "dynamic": [
+        {
+          "type": "startEvent",
+          "name": "Arrival",
+          "nodeId": "node_1",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Check-in = True?",
+          "nodeId": "node_2",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "CheckInStatus",
+              "code": "token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Check-in",
+          "nodeId": "node_3",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DoCheckIn",
+              "code": "token.CheckIn = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Luggage = True?",
+          "nodeId": "node_4",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "LuggageCheck",
+              "code": "token.Luggage === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Luggage drop-off",
+          "nodeId": "node_5",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DropLuggage",
+              "code": "token.Luggage = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "intermediateEvent",
+          "name": "Enter security",
+          "nodeId": "node_7",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Boarding card scan",
+          "nodeId": "node_8",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+              "name": "CheckInStatus",
+              "code": "token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "andGateway",
+          "name": "CarryOnScan = false?",
+          "nodeId": "node_9",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "CheckForCarryOn",
+                "code": "token.CarryOnScan === false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Carry-on scan",
+          "nodeId": "node_10",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "CarryOnScan",
+                "code": "token.CarryOnScan = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Body scan",
+          "nodeId": "node_11",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "BodyScan",
+                "code": "token.BodyScan = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "andGateway",
+          "name": "Merge after scan",
+          "nodeId": "node_12",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "endEvent",
+          "name": "To waiting area",
+          "nodeId": "node_6",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+                "name": "CheckPassanger",
+                "code": "token.Luggage === false && token.CheckIn === true && token.CarryOnScan === true && token.BodyScan === true"
+            }
+            ]
+         }
+      ]
+    },
+    {
+      "scenarioId": "scenario_3",
+      "scenarioTitle": "Level 3: Waiting Area",
+      "scenarioDescription": "Set up the waiting area with amenities for passenger comfort",
+      "tokens": [
+        {
+            "tokenId": "token_1",
+            "type": "Passenger",
+            "name": "Alice",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_2",
+            "type": "Passenger",
+            "name": "Bob",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_3",
+            "type": "Passenger",
+            "name": "Charlie",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_4",
+            "type": "Passenger",
+            "name": "Diana",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_5",
+            "type": "Passenger",
+            "name": "Erik",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_6",
+            "type": "Passenger",
+            "name": "Fiona",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_7",
+            "type": "Passenger",
+            "name": "George",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_8",
+            "type": "Passenger",
+            "name": "Hannah",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_9",
+            "type": "Passenger",
+            "name": "Ian",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_10",
+            "type": "Passenger",
+            "name": "Julia",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_11",
+            "type": "Passenger",
+            "name": "Kevin",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_12",
+            "type": "Passenger",
+            "name": "Laura",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_13",
+            "type": "Passenger",
+            "name": "Mike",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_14",
+            "type": "Passenger",
+            "name": "Nina",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_15",
+            "type": "Passenger",
+            "name": "Oscar",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_16",
+            "type": "Passenger",
+            "name": "Paula",
+            "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_17",
+            "type": "Passenger",
+            "name": "Quinn",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_18",
+            "type": "Passenger",
+            "name": "Rachel",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_19",
+            "type": "Passenger",
+            "name": "Sam",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_20",
+            "type": "Passenger",
+            "name": "Tina",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_21",
+            "type": "Passenger",
+            "name": "Uma",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_22",
+            "type": "Passenger",
+            "name": "Victor",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_23",
+            "type": "Passenger",
+            "name": "Wendy",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_24",
+            "type": "Passenger",
+            "name": "Xavier",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_25",
+            "type": "Passenger",
+            "name": "Yara",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_26",
+            "type": "Passenger",
+            "name": "Zack",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_27",
+            "type": "Passenger",
+            "name": "Amy",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_28",
+            "type": "Passenger",
+            "name": "Ben",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": false,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_29",
+            "type": "Passenger",
+            "name": "Cora",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_30",
+            "type": "Passenger",
+            "name": "Dan",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": false,
+            "WantsFood": true
+            }
+        },
+        {
+            "tokenId": "token_31",
+            "type": "Passenger",
+            "name": "Eva",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": false
+            }
+        },
+        {
+            "tokenId": "token_32",
+            "type": "Passenger",
+            "name": "Fred",
+            "variables": {
+            "CheckIn": true,
+            "Luggage": true,
+            "CarryOnScan": true,
+            "BodyScan": false,
+            "WantsShopping": true,
+            "WantsFood": true
+            }
+        }
+        ],
+      "static": {
+        "pools": [
+          {
+            "poolId": "pool_1",
+            "name": "Airport",
+            "coordinates": {"x": 50, "y": 50},
+            "size": {"width": 1100, "height": 700}
+          }
+        ],
+        "lanes": [
+          {
+            "laneId": "lane_1",
+            "name": "Outside Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 530},
+            "size": {"width": 1000, "height": 220}
+          },
+          {
+            "laneId": "lane_2",
+            "name": "Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 270},
+            "size": {"width": 1000, "height": 260}
+          },
+          {
+            "laneId": "lane_3",
+            "name": "Inside Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 50},
+            "size": {"width": 1000, "height": 220}
+          }
+        ],
+        "nodes": [],
+        "connectors": []
+      },
+      "dynamic": [
+        {
+          "type": "startEvent",
+          "name": "Arrival",
+          "nodeId": "node_1",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Check-in = True?",
+          "nodeId": "node_2",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "CheckInStatus",
+              "code": "token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Check-in",
+          "nodeId": "node_3",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DoCheckIn",
+              "code": "token.CheckIn = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Luggage = True?",
+          "nodeId": "node_4",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "LuggageCheck",
+              "code": "token.Luggage === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Luggage drop-off",
+          "nodeId": "node_5",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DropLuggage",
+              "code": "token.Luggage = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "intermediateEvent",
+          "name": "Enter security",
+          "nodeId": "node_7",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Boarding card scan",
+          "nodeId": "node_8",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+              "name": "CheckInStatus",
+              "code": "token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "andGateway",
+          "name": "CarryOnScan = false?",
+          "nodeId": "node_9",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "CheckForCarryOn",
+                "code": "token.CarryOnScan === false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Carry-on scan",
+          "nodeId": "node_10",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "CarryOnScan",
+                "code": "token.CarryOnScan = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Body scan",
+          "nodeId": "node_11",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "BodyScan",
+                "code": "token.BodyScan = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "andGateway",
+          "name": "Merge after scan",
+          "nodeId": "node_12",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "intermediateEvent",
+          "name": "Cleared security",
+          "nodeId": "node_13",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "inclusiveOrGateway",
+          "name": "Choose activities",
+          "nodeId": "node_14",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+                "name": "Shopper",
+                "code": "token.WantsShopping === true"
+            },
+            {
+                "name": "Hungry",
+                "code": "token.WantsFood === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Souvenir shop",
+          "nodeId": "node_15",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+              "name": "Shopping",
+              "code": "token.WantsShopping = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Kiosk",
+          "nodeId": "node_16",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+              "name": "GetFood",
+              "code": "token.WantsFood = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "inclusiveOrGateway",
+          "name": "done shopping.",
+          "nodeId": "node_14",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "actvity",
+          "name": "Wait for boarding",
+          "nodeId": "node_18",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "endEvent",
+          "name": "Boarding",
+          "nodeId": "node_6",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+                "name": "CheckPassanger",
+                "code": "token.Luggage === false && token.CheckIn === true && token.CarryOnScan === true && token.BodyScan === true"
+            }
+            ]
+            }
+        ]
+    },
+    {
+      "scenarioId": "scenario_4",
+      "scenarioTitle": "Level 4: Advanced Airport Operations",
+      "scenarioDescription": "Expand the model with safety, commercial, and procedural elements",
+      "tokens": [
+        {
+          "tokenId": "token_1",
+          "type": "Passenger",
+          "name": "Alice",
+          "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "PersonalItems": true,
+            "Passport": true,
+            "HasTicket": true,
+            "FastTrack": false,
+            "DrugFree": true,
+            "WantsTaxFree": true
+          }
+        },
+        {
+          "tokenId": "token_2",
+          "type": "Passenger",
+          "name": "Bob",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "PersonalItems": true,
+            "Passport": false,
+            "HasTicket": true,
+            "FastTrack": false,
+            "DrugFree": true,
+            "WantsTaxFree": false
+          }
+        },
+        {
+          "tokenId": "token_3",
+          "type": "Passenger",
+          "name": "Diana",
+          "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "PersonalItems": true,
+            "Passport": true,
+            "HasTicket": false,
+            "FastTrack": false,
+            "DrugFree": true,
+            "WantsTaxFree": false
+          }
+        },
+        {
+          "tokenId": "token_4",
+          "type": "Passenger",
+          "name": "Erik",
+          "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "PersonalItems": true,
+            "Passport": true,
+            "HasTicket": true,
+            "FastTrack": true,
+            "DrugFree": true,
+            "WantsTaxFree": true
+          }
+        }
+      ],
+      "static": {
+        "pools": [
+          {
+            "poolId": "pool_1",
+            "name": "Airport",
+            "coordinates": {"x": 50, "y": 50},
+            "size": {"width": 1100, "height": 700}
+          }
+        ],
+        "lanes": [
+          {
+            "laneId": "lane_1",
+            "name": "Outside Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 530},
+            "size": {"width": 1000, "height": 220}
+          },
+          {
+            "laneId": "lane_2",
+            "name": "Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 270},
+            "size": {"width": 1000, "height": 260}
+          },
+          {
+            "laneId": "lane_3",
+            "name": "Inside Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 50},
+            "size": {"width": 1000, "height": 220}
+          }
+        ],
+        "nodes": [],
+        "connectors": []
+      },
+      "dynamic": [
+        {
+          "type": "startEvent",
+          "name": "Arrival",
+          "nodeId": "node_1",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Check-in = True?",
+          "nodeId": "node_2",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "CheckInStatus",
+              "code": "token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Check-in",
+          "nodeId": "node_3",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DoCheckIn",
+              "code": "token.CheckIn = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Luggage = True?",
+          "nodeId": "node_4",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "LuggageCheck",
+              "code": "token.Luggage === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Luggage drop-off",
+          "nodeId": "node_5",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "DropLuggage",
+              "code": "token.Luggage = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "intermediateEvent",
+          "name": "Enter security",
+          "nodeId": "node_7",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Boarding card scan",
+          "nodeId": "node_8",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+              "name": "CheckInStatus",
+              "code": "token.CheckIn === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "andGateway",
+          "name": "CarryOnScan = false?",
+          "nodeId": "node_9",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "CheckForCarryOn",
+                "code": "token.CarryOnScan === false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Carry-on scan",
+          "nodeId": "node_10",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "CarryOnScan",
+                "code": "token.CarryOnScan = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Body scan",
+          "nodeId": "node_11",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+                "Name": "BodyScan",
+                "code": "token.BodyScan = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "andGateway",
+          "name": "Merge after scan",
+          "nodeId": "node_12",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "intermediateEvent",
+          "name": "Cleared security",
+          "nodeId": "node_13",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "inclusiveOrGateway",
+          "name": "Choose activities",
+          "nodeId": "node_14",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+                "name": "Shopper",
+                "code": "token.WantsShopping === true"
+            },
+            {
+                "name": "Hungry",
+                "code": "token.WantsFood === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Souvenir shop",
+          "nodeId": "node_15",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+              "name": "Shopping",
+              "code": "token.WantsShopping = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Kiosk",
+          "nodeId": "node_16",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+              "name": "GetFood",
+              "code": "token.WantsFood = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "inclusiveOrGateway",
+          "name": "done shopping.",
+          "nodeId": "node_14",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "actvity",
+          "name": "Wait for boarding",
+          "nodeId": "node_18",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Passport = True?",
+          "nodeId": "node_21",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "PassportCheck",
+              "code": "token.Passport === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Passport office",
+          "nodeId": "node_22",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "GetPassport",
+              "code": "token.Passport = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "Ticket = True?",
+          "nodeId": "node_23",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "TicketCheck",
+              "code": "token.HasTicket === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Ticket office",
+          "nodeId": "node_24",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+              "name": "BuyTicket",
+              "code": "token.HasTicket = true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "xorGateway",
+          "name": "FastTrack = True?",
+          "nodeId": "node_25",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+              "name": "FastTrackCheck",
+              "code": "token.FastTrack === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Fast track",
+          "nodeId": "node_26",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+              "name": "FastTrack",
+              "code": "token.FastTrack = true"
+            }
+            ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Drug sniffing dogs",
+          "nodeId": "node_27",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_2"],
+          "functions": [
+            {
+              "name": "DrugCheck",
+              "code": "token.DrugFree === true"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Taxfree: Alcohol",
+          "nodeId": "node_28",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+                "name": "BoughtAlcohol",
+                "code": "token.WantsTaxFree = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Taxfree: Tobacco",
+          "nodeId": "node_29",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+                "name": "BoughtTobacco",
+                "code": "token.WantsTaxFree = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "activity",
+          "name": "Taxfree: Other",
+          "nodeId": "node_30",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_3"],
+          "functions": [
+            {
+                "name": "BoughtTaxFree",
+                "code": "token.WantsTaxFree = false"
+            }
+          ],
+          "amount": 1
+        },
+        {
+          "type": "endEvent",
+          "name": "Boarding",
+          "nodeId": "node_6",
+          "parentPoolId": ["pool_1"],
+          "parentLaneId": ["lane_1"],
+          "functions": [
+            {
+                "name": "CheckPassanger",
+                "code": "token.Luggage === false && token.CheckIn === true && token.CarryOnScan === true && token.BodyScan === true"
+            }
+      ]
+    },
+    {
+      "scenarioId": "scenario_5",
+      "scenarioTitle": "Level 5: Sandbox Mode",
+      "scenarioDescription": "Build the complete airport model from scratch using all available elements",
+      "tokens": [
+        {
+          "tokenId": "token_1",
+          "type": "Passenger",
+          "name": "Alice",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "PersonalItems": true,
+            "Passport": true,
+            "HasTicket": true,
+            "FastTrack": false,
+            "DrugFree": true,
+            "WantsShopping": true,
+            "WantsFood": false,
+            "WantsTaxFree": true
+          }
+        },
+        {
+          "tokenId": "token_2",
+          "type": "Passenger",
+          "name": "Bob",
+          "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "PersonalItems": true,
+            "Passport": false,
+            "HasTicket": true,
+            "FastTrack": true,
+            "DrugFree": true,
+            "WantsShopping": false,
+            "WantsFood": true,
+            "WantsTaxFree": false
+          }
+        },
+        {
+          "tokenId": "token_3",
+          "type": "Passenger",
+          "name": "Charlie",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": true,
+            "PersonalItems": true,
+            "Passport": true,
+            "HasTicket": false,
+            "FastTrack": false,
+            "DrugFree": true,
+            "WantsShopping": true,
+            "WantsFood": true,
+            "WantsTaxFree": true
+          }
+        },
+        {
+          "tokenId": "token_4",
+          "type": "Passenger",
+          "name": "Diana",
+          "variables": {
+            "CheckIn": true,
+            "Luggage": false,
+            "PersonalItems": true,
+            "Passport": true,
+            "HasTicket": true,
+            "FastTrack": false,
+            "DrugFree": true,
+            "WantsShopping": false,
+            "WantsFood": false,
+            "WantsTaxFree": false
+          }
+        },
+        {
+          "tokenId": "token_5",
+          "type": "Passenger",
+          "name": "Erik",
+          "variables": {
+            "CheckIn": false,
+            "Luggage": false,
+            "PersonalItems": true,
+            "Passport": true,
+            "HasTicket": true,
+            "FastTrack": true,
+            "DrugFree": true,
+            "WantsShopping": true,
+            "WantsFood": false,
+            "WantsTaxFree": true
+          }
+        }
+      ],
+      "static": {
+        "pools": [
+          {
+            "poolId": "pool_1",
+            "name": "Airport",
+            "coordinates": {"x": 50, "y": 50},
+            "size": {"width": 1100, "height": 700}
+          }
+        ],
+        "lanes": [
+          {
+            "laneId": "lane_1",
+            "name": "Outside Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 530},
+            "size": {"width": 1000, "height": 220}
+          },
+          {
+            "laneId": "lane_2",
+            "name": "Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 270},
+            "size": {"width": 1000, "height": 260}
+          },
+          {
+            "laneId": "lane_3",
+            "name": "Inside Security",
+            "parentPoolId": "pool_1",
+            "coordinates": {"x": 150, "y": 50},
+            "size": {"width": 1000, "height": 220}
+          }
+        ],
+        "nodes": [],
+        "connectors": []
+      },
+      "dynamic": []
+    }
+  ]
+    }
+  ]
+}
