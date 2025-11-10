@@ -354,9 +354,8 @@ function showLinkToQuiz(){
 // Compares the users solution against the corrent solution (from the JSON)
 function verifySolution() {
   // Nullstiller tidligere data
-  let results = []; // Hva brukes results[] til..
+  let results = [];
   let allTokensCorrect;
-
 
   //creating an array of objects containing "nodeID" and "task" from the nodes in the "boxes" array created earlier
   let nodeTaskMap = Object.fromEntries(boxes.map(n => [n.nodeId, n.task]));
@@ -369,26 +368,46 @@ function verifySolution() {
 
   for (let token of model.loadedScenarioData.scenarios[model.game.currentScenario].tokens)
   {
-    //If a every element of a tokens requiredTasks exists in the users diagram solution
-    //Stringification helps comparison.
     if(token.requiredTasks.every(pair => userSolution.has(JSON.stringify(pair))))
     {
       console.log(token.name + " Passed");
-      token.hasPassed = true; // This attribute is added/altered and used by the setTaskDescription to give feedback to the user (Pass/Fail)
-      results.push(token.hasPassed ? 1 : 0); //This is used by the BKT learning system
-    }else{
+      token.hasPassed = true;
+      results.push(1);
+    } else {
       console.log(token.name + " Failed");
-      token.hasPassed = false; // This attribute is added/altered and used by the setTaskDescription to give feedback to the user (Pass/Fail)
-        results.push(token.hasPassed ? 1 : 0); //This is used by the BKT learning system
+      token.hasPassed = false;
+      results.push(0);
     }
   }
 
   //If every token was correct, if one failed, the learning system takes it as failed.
-  allTokensCorrect = model.loadedScenarioData.scenarios[model.game.currentScenario].tokens.every(tkn => tkn.hasPassed == true );
+  allTokensCorrect = model.loadedScenarioData.scenarios[model.game.currentScenario].tokens.every(tkn => tkn.hasPassed == true);
 
-  setTaskDescription() //Updates the status of the task description, feedback to user, (pass / fail)
-  updateLearning(allTokensCorrect);
+  setTaskDescription(); //Updates the status of the task description, feedback to user (pass/fail)
+  updateLearning(allTokensCorrect); // Updates the BKT learning model
+
+  // SENDER RESULTAT TIL GOOGLE SHEETS 
+  const data = {
+    id: player.id,
+    scenario: model.game.currentScenario + 1,
+    knowledge: player.knowledge,
+    result: allTokensCorrect ? 1 : 0,
+    timestamp: new Date().toLocaleString()
+  };
+
+
+  const scriptURL = "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
+
+  fetch(scriptURL, {
+    method: "POST",
+    mode: "no-cors", // Hindrer CORS-feil
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(() => console.log("Resultat sendt til Google Sheet:", data))
+  .catch(err => console.error(" Feil ved sending til Google Sheet:", err));
 }
+
 
 
 //  STARTSPILL-FUNKSJON 
@@ -412,7 +431,7 @@ function startGame() {
   // Bygger spiller-ID, f.eks. TS2607
   const playerID = `${initials}${day}${month}`;
   player.id = playerID;
-  console.log("👤 Spiller-ID:", player.id);
+  console.log("Spiller-ID:", player.id);
 
   // Skjul login-seksjonen og vis spillet
   document.getElementById("loginSection").style.display = "none";
