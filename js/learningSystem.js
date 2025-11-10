@@ -78,72 +78,57 @@ verifySolution = function () {
 };
 
 
-// EKSPORTER ALLE RESULTATER TIL CSV 
-// Denne funksjonen samler alle "learning_*"-elementer i localStorage
-// og lagrer dem i en .csv-fil som lastes ned i nettleseren
-function exportResultsToCSV() {
-  // Samle alle nøkler som starter med "learning_"
-  const keys = Object.keys(localStorage).filter(k => k.startsWith("learning_"));
-  if (keys.length === 0) {
-    alert("no learnigndata found!");
-    return;
+// SJEKKER OG LAGRER BRUKERENS LØSNING (med Google Sheets-integrasjon) 
+function verifySolution() {
+  // Nullstill tidligere resultater
+  testResults = [];
+  let results = [];
+
+  // Hent korrekt løsning fra modellen
+  let correctSolution = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution;
+
+  // Sammenlign brukerens løsning med fasiten
+  let isCorrect = JSON.stringify(currentUserSolution) === JSON.stringify(correctSolution);
+
+  // Lagre 1 (riktig) eller 0 (feil)
+  results.push(isCorrect ? 1 : 0);
+
+  // Oppdater spillerens kunnskapsnivå (Bayesian Knowledge Tracing)
+  if (typeof learner !== "undefined") {
+    player.knowledge = learner.update(isCorrect);
+    console.log(`Oppdatert kunnskapsnivå: ${player.knowledge.toFixed(2)}`);
   }
 
-  // Bygg CSV-header og rader
-  let csvContent = "PlayerID,Knowledge,Result,Timestamp\n";
+  // Lagre resultatdata
+  const data = {
+    id: player.id,
+    scenario: model.game.currentScenario + 1, // Scenario-nummer
+    knowledge: player.knowledge,
+    result: isCorrect ? 1 : 0,
+    timestamp: new Date().toLocaleString()
+  };
 
-  keys.forEach(key => {
-    const data = JSON.parse(localStorage.getItem(key));
-    csvContent += `${data.id},${data.knowledge},${data.result},${data.timestamp}\n`;
-  });
+  // LAGRER LOKALT I NETTLESER 
+  localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stringify(data));
+  console.log("Læringsdata lagret lokalt:", data);
 
-  // Lag en Blob (datafil) og last den ned som CSV
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "learning_results.csv");
-  link.click();
+  // SENDER TIL GOOGLE SHEETS 
+  // Bytt ut lenken nedenfor med din egen "Web App URL" fra Google Apps Script
+  const scriptURL = "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
+
+  fetch(scriptURL, {
+    method: "POST",
+    mode: "no-cors", // Hindrer CORS-feil
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+  .then(() => console.log("Resultat sendt til Google Sheet:", data))
+  .catch(err => console.error("Feil ved sending til Google Sheet:", err));
+
+  // Oppdater visningen
+  setTaskDescription([isCorrect ? "PASS" : "FAIL"]);
+  updateLearningDisplay();
 }
 
-
-// === EKSPORTER SPILLERFREMDRIFT TIL CSV ===
-// Denne funksjonen samler all lagret læringsdata (fra localStorage)
-// og laster det automatisk ned som en CSV-fil.
-function exportPlayerProgressToCSV(autoDownload = false) {
-  // Henter alle nøkler som starter med "learning_"
-  const keys = Object.keys(localStorage).filter(k => k.startsWith("learning_"));
-  if (keys.length === 0) {
-    alert("Ingen lagrede spillerdata funnet!");
-    return;
-  }
-
-  // Lager CSV-header (kolonnenavn)
-  let csvContent = "PlayerID,Scenario,Knowledge,Result,Timestamp\n";
-
-  // Legger til data for hver spiller
-  keys.forEach(key => {
-    const data = JSON.parse(localStorage.getItem(key));
-    csvContent += `${data.id},${data.scenario},${data.knowledge},${data.result},${data.timestamp}\n`;
-  });
-
-  // Oppretter CSV-blob (filinnhold)
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
-  // Lagrer filen lokalt
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", "spiller_fremdrift.csv");
-  document.body.appendChild(link);
-
-  // Hvis autoDownload = true → last ned automatisk etter scenario
-  if (autoDownload) {
-    link.click();
-  }
-
-  document.body.removeChild(link);
-  console.log("💾 CSV-fil generert:", "spiller_fremdrift.csv");
-}
 
 
