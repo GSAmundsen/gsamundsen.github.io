@@ -78,56 +78,6 @@ verifySolution = function () {
 };
 
 
-// SJEKKER OG LAGRER BRUKERENS LØSNING (med Google Sheets-integrasjon) 
-function verifySolution() {
-  // Nullstill tidligere resultater
-  testResults = [];
-  let results = [];
-
-  // Hent korrekt løsning fra modellen
-  let correctSolution = model.ScenarioLevels[model.game.currentScenario].ScenarioSolution;
-
-  // Sammenlign brukerens løsning med fasiten
-  let isCorrect = JSON.stringify(currentUserSolution) === JSON.stringify(correctSolution);
-
-  // Lagre 1 (riktig) eller 0 (feil)
-  results.push(isCorrect ? 1 : 0);
-
-  // Oppdater spillerens kunnskapsnivå (Bayesian Knowledge Tracing)
-  if (typeof learner !== "undefined") {
-    player.knowledge = learner.update(isCorrect);
-    console.log(`Oppdatert kunnskapsnivå: ${player.knowledge.toFixed(2)}`);
-  }
-
-  // Lagre resultatdata
-  const data = {
-    id: player.id,
-    scenario: model.game.currentScenario + 1, // Scenario-nummer
-    knowledge: player.knowledge,
-    result: isCorrect ? 1 : 0,
-    timestamp: new Date().toLocaleString()
-  };
-
-  // LAGRER LOKALT I NETTLESER 
-  localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stringify(data));
-  console.log("Læringsdata lagret lokalt:", data);
-
-  // SENDER TIL GOOGLE SHEETS 
-  const scriptURL = "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
-
-  fetch(scriptURL, {
-    method: "POST",
-    mode: "no-cors", // Hindrer CORS-feil
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  })
-  .then(() => console.log("Resultat sendt til Google Sheet:", data))
-  .catch(err => console.error("Feil ved sending til Google Sheet:", err));
-
-  // Oppdater visningen
-  setTaskDescription([isCorrect ? "PASS" : "FAIL"]);
-  updateLearningDisplay();
-}
 
 
 
