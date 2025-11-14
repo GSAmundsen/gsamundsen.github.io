@@ -1,5 +1,3 @@
-
-
 # JSON Input Format
 V.0.1 by Przybyslaw S. Paz - 10.10.2025
 
@@ -10,32 +8,23 @@ All fields use camelCase naming.
 
 
 ## Unresolved
-- **Canvas Size**: for this version it will be only one workable size, but needs to be resolved what it is.
-    - And how you write the attribute
 - **Image Formats**: Which formats to support for `tutorialImage` and `failureImage`
     - Candidates: .png, .jpg, .svg, .gif?
-    - And in which sizes?
-- **JavaScript Operations**: Document which JS operations are safe/supported in `functions.code`
-    - Need to decide: Whitelist specific operations or allow all?
-    - Consider: Security implications, error handling
-- **Completaion of all scenarios**: What happens once you finish all scenarios? Something custom uploaded by JSON or just an exit link?
+    - And in which sizess
 
 
-## Canvas Coordinates
-This format uses **web-standard coordinates** with origin at the top-left:
-- `x`: Distance from left edge (increases rightward)
-- `y`: Distance from top edge (increases downward)
-- Origin `(0, 0)` is the top-left corner of the canvas
-Example: In a 1200 × 800 canvas, `(100, 50)` places an element 100px from the left and 50px from the top.
+## Canvas Size
+Reference canvas: 1200×800 pixels
+All coordinates scale proportionally to actual window size (80% width, 60% height)
+
 
 ## Supported JavaScript Operations
-
 Functions use JavaScript code strings. here are the currently supported patterns:
+- Activites: can set a boolean value on a token variable
+- Gateways: checks the boolean value of a token variable 
 
--
 
 ## Structure
-
 - `schemaVersion` (string, required): Schema version number
   - Example: `"1.0"`
   - Used for compatibility checking
@@ -56,19 +45,6 @@ Functions use JavaScript code strings. here are the currently supported patterns
     - `campaignDescription` (string, required): Description of overall scenario
     - `numberOfScenarios` (integer, required): Total count of scenarios
         - Must match actual array length
-    - `sequential` (boolean, required): Whether scenarios must be presented and completed in order
-        - `true` = must complete in order
-        - `false` = can complete in any order
-    - `building` (boolean, required): Whether scenarios build on each other.
-        - Still requires all elements to be written into each scenario, but checks which ones are already loaded on canvas and loads the rest in the menu.
-        - `true` = retain elements from previous scenario
-        - `false` = start fresh each time
-    - `canvasSize` (object, required): Canvas dimensions in pixels
-        - `width` (integer): Width in pixels (default: 1200) 
-        - `height` (integer): Height in pixels (default: 800)
-    - `followUpCampaign` (string, optional): Path to next campaign
-        - Relative path from project root
-        - Supported formats: JSON
     - `endScreenText` (string, optional): Text player sees after finishing campaign
 
 
@@ -81,13 +57,24 @@ Functions use JavaScript code strings. here are the currently supported patterns
             - Must start from scenario_1
         - `scenarioTitle` (string, required): Display name
         - `scenarioDescription` (string, required): Description of overall scenario
+        - `resetCanvas` (boolean, optional): if true all nodes from previous scenario are deleted when loading this scenario.
         - `tutorialImage` (string, optional): Path to help image
             - Relative path from project root
             - Supported formats: -
         - `failureImage` (string, optional): Path to help image
             - Relative path from project root
             - Supported formats: -
-        - `tokens` (array, required): Game tokens with variables
+        - `failureDescription` (array, optional): Strings used for feedback failure on variables
+            - `variableName`(array, required): an array of descriptive strings
+                - `failureString`(string, require): string describing failure
+                - Format: token.name is later added in front + failureString
+        - `endEventChecks`(array, optional): a collection of the variable checks endEvent does
+            - Each function object requires:
+                - `name` (string, required): Descriptive name of the function
+                    - Example: `"CheckInTrue"`
+                - `code` (string, required): JavaScript code to execute
+                    - Example: `"token.CheckIn = true"`
+        - `tokens` (object, required): Game tokens with variables
             - Each token object requires:
                 - `tokenId` (string, required): Unique token identifier
                     - Format: `"token_N"` where N is the number
@@ -102,7 +89,7 @@ Functions use JavaScript code strings. here are the currently supported patterns
                         - `integer`: `5`, `0`, `-3`
                         - `array`: `[]`, `["item1", 5]`
 
-    - `static` (object, optional): Pre-placed, immovable elements
+    - `static` (object, optional): Background, immovable elements
         - Can be omitted if scenario has no fixed elements
         - If included, contains:
             - `pools` (array, optional): Container elements
@@ -128,38 +115,15 @@ Functions use JavaScript code strings. here are the currently supported patterns
                     - `size` (object, required): Dimensions
                         - `width` (integer, required): Width in pixels
                         - `height` (integer, required): Height in pixels
-            - `nodes` (array, optional): Fixed nodes on canvas
-                - Each node object requires:
-                    - `type` (string, required): Type description
-                    - `name` (string, optional): Display name
-                    - `nodeId` (string, required): Unique node identifier
-                        - Format: `"node_N"` where N is the number
-                    - `parentPoolId` (string, optional): ID of containing pool
-                    - `parentLaneId` (string, optional): ID of containing lane
-                    - `coordinates` (object, required): Position on canvas
-                        - `x` (integer, required): x coordinates
-                        - `y` (integer, required): y coordinates
-                    - `functions` (array, optional): List of functions that node holds
-                        - Each function object requires:
-                            - `name` (string, required): Descriptive name of the function
-                                - Example: `"CheckInTrue"`
-                            - `code` (string, required): JavaScript code to execute
-                                - Example: `"token.CheckIn = true"`
-            - `connectors` (array, optional): Fixed connections on canvas
-                - Each node object requires:
-                    - `type` (string, required): Type description
-                    - `connectorId` (string, required): Unique connector identifier
-                        - Format: `"connector_N"` where N is the number
-                    - `fromNodeId` (string, required): ID of departure node
-                    - `toNodeId` (string, required): ID of arrival node 
 
-    - `dynamic` (array, required): Elements player can put on map
+    - `nodes` (array, required): Elements player can put on map
+        - EndEvent nodes are generated by the program and should not be inputed through here.
         - Each dynamic element is an object with:
             - `type` (string, required): Type description
                 - Currently supported: activity, startEvent, xorGateway, andGateway, incomingAndGateway, endEvent
             - `name` (string, optional): Display name
             - `nodeId` (string, required): Unique node identifier
-                - Format: `"node_N"` where N is the number
+                - Format: `"node_N"` where N is the number and starts from 1. 0 is reserved for endEvent.
             - `parentPoolId` (array, optional): IDs of containing pool
                 - If omitted then element can be placed anywhere
             - `parentLaneId` (array, optional): IDs of containing lane
@@ -177,5 +141,3 @@ Functions use JavaScript code strings. here are the currently supported patterns
                         - Example: `"CheckInTrue"`
                     - `code` (string, required): JavaScript code to execute
                         - Example: `"token.CheckIn = true"`
-            - `amount` (integer, required): How many of them are available to the player.
-                - 0 denotes an infinite amount

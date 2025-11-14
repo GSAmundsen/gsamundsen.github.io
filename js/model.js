@@ -1,47 +1,40 @@
 let model = {
 
+    settings:{
+        selectedBoxColor: 'rgba(171, 224, 224, 0.70)',
+        standardBoxColor: 'rgba(255, 255, 255, 1)',
+        laneBorderColor: 'rgba(99, 99, 99, 1)'
+    },
+
+    referanceCanvas: {
+        width: 1200,
+        height: 800
+        },
+
+    canvasProperties: {
+        width: window.screen.width*0.80,
+        height: window.screen.height*0.6,
+        backgroundColor: 'white'
+    },
+
     // Raw JSON data
     loadedScenarioData: null,
-
-    // Other static properties
-    staticProperties: {
-        canvasBackgroundColor: 'white',
-        selectedBoxColor: 'rgba(171, 224, 224, 1)',
-        normalBoxFill: 'white',
-    },
-
-    operationalVariables: {
-        buidlingNodes: [],
-    },
     
     // Information about the current game
-    campaign: {
-        currentScenario: null,
-        finishedScenarios: [],
+    game: {
+        currentScenario: 0,
         numberOfScenarios: 0,
-        mainTitle: null,
-        campaignDescription: null,
-        sequential: null,
-        building: null,
-        canvasWidth: 0,
-        canvasHeight: 0,
-        followUpCampaign: null,
-        endScreenText: null,
+        moduleTitle: null,
+        moduleDescription: null,
+        endScreenText: null
     },
-    
-    // Information about the current scenario
+
     currentScenario: {
-        scenarioTitle: null,
-        scenarioDescription: null,
-        tutorialImage: null,
-        failureImage: null,
+        tokens: [],
         pools: [],
         lanes: [],
-        staticNodes: [],
-        staticConnectors: [],
-        dynamicNodesInMenu: [],
-        dynamicNodesOnCanvas: [],
-        dynamicConnectors: [],
-        tokens: [],
+        nodes: [],
+        connectors: []
     }
+    
 }

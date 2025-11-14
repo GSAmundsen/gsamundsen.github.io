@@ -5,7 +5,7 @@ function drawPools(pools = []){
   context.strokeStyle = "rgba(99, 99, 99, 1)";
   context.lineWidth = 2;
   context.fillStyle = "black";
-  context.font = "14px Arial";
+  context.font = "16px Arial";
   context.textAlign = "center";
   context.textBaseline = "middle";
   
@@ -37,7 +37,7 @@ function drawLanes(lanes = [])
 
 // Finds connector coordinates then send it to draw connector line
 function connectorCoordinates(connectors = []) {
-  const allNodes = getNodes();
+  const allNodes = model.currentScenario.nodes;
 
   for (const connector of connectors) {
     const fromNode = allNodes.find(n => n.nodeId === connector.fromNodeId);
@@ -66,7 +66,7 @@ function connectorCoordinates(connectors = []) {
     }
 
     // === OR gateway function labels ===
-    if (fromNode.type === "orGateway" && Array.isArray(fromNode.nodeConnections)) {
+    if (fromNode.type === "inclusiveGateway" && Array.isArray(fromNode.nodeConnections)) {
       const connData = fromNode.nodeConnections.find(c => c.connectorId === connector.connectorId);
       if (connData && typeof connData.functionIndex === "number") {
         const fn = fromNode.functions?.[connData.functionIndex];
@@ -107,22 +107,6 @@ function drawTemporaryArrow() {
   }
 }
 
-// Gets all nodes in use
-function getNodes() {
-  return allNodes = [
-    ...model.currentScenario.staticNodes,
-    ...model.currentScenario.dynamicNodesInMenu,
-    ...model.currentScenario.dynamicNodesOnCanvas
-  ];
-}
-
-// Gets all connectors in use
-function getConnectors() {
-  return allConnectors = [
-    ...model.currentScenario.staticConnectors,
-    ...model.currentScenario.dynamicConnectors
-  ];
-}
 // Draws connector line
 function drawLine(fromX, fromY, toX, toY, lineColor) {
   context.beginPath();
@@ -148,8 +132,18 @@ function drawConnectorLabel(text, x, y, angle, color = "black") {
 
   // Move the origin to the text point (middle of line)
   context.translate(x, y);
+  
   // Rotate to match connector angle
-  context.rotate(angle);
+  
+
+  let textAngle = angle % (2 * Math.PI);
+  if (textAngle < 0) textAngle += 2 * Math.PI;
+  
+  // If pointing left (90° to 270°), flip 180°
+  if (textAngle > Math.PI / 2 && textAngle < 3 * Math.PI / 2) {
+    textAngle += Math.PI;
+  }
+  context.rotate(textAngle);
 
   // Style
   context.font = "12px Arial";
@@ -182,7 +176,7 @@ function drawNodes(nodes = []) {
       continue;
     }
     
-    context.fillStyle = model.staticProperties.normalBoxFill
+    context.fillStyle = model.settings.standardBoxColor
     
     if(node.type === "activity"){
       drawActivity(node);
@@ -195,7 +189,7 @@ function drawNodes(nodes = []) {
 
   // Draws the selected box after the others
   if (selectedNode !== null) {
-    context.fillStyle = model.staticProperties.selectedBoxColor;
+    context.fillStyle = model.settings.selectedBoxColor;
     
     if(selectedNode.type === "activity"){
       drawActivity(selectedNode);
@@ -224,11 +218,16 @@ function drawGateway(node){
     drawExclusiveGateway(node)
   } else if (node.type === 'andGateway') {
     drawParallelGateway(node)
-  } else if (node.type === 'incomingAndGateway') {
-    drawParallelGateway(node)
-  } else if (node.type === 'orGateway') {
+  } else if (node.type === 'inclusiveGateway') {
     drawInclusiveGateway(node)
   }
+
+  const centerX = node.coordinates.x + node.width / 2;
+  const centerY = node.coordinates.y + node.height / 2;
+  context.fillStyle = "black";
+  context.font = "12px Arial";
+  context.textAlign = "center";
+  context.fillText(node.name, centerX, centerY + node.height / 2 + 15);
 }
 
 // GATEWAY-TEGNING I BPMN-STIL 
@@ -294,14 +293,63 @@ function drawInclusiveGateway(node) {
 }
 
 function drawEvent(node) {
+  if (node.type === 'startEvent') {
+    drawStartEvent(node);
+  } else if (node.type === 'endEvent') {
+    drawEndEvent(node);
+  } else if (node.type === 'intermediateEvent') {
+    drawIntermediateEvent(node);
+  }
+}
+
+// Start event: single thin circle
+function drawStartEvent(node) {
   const radius = node.width / 2;
+  const centerX = node.coordinates.x + radius;
+  const centerY = node.coordinates.y + radius;
+  
   context.beginPath();
-  // Tegner en liten sirkel inni diamanten
-  context.arc(node.coordinates.x + radius, 
-              node.coordinates.y + radius, 
-              radius, 0, Math.PI * 2);
-  context.fill(); 
+  context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  context.fill();
   context.stroke();
+}
+
+// End event: single thick circle
+function drawEndEvent(node) {
+  const radius = node.width / 2;
+  const centerX = node.coordinates.x + radius;
+  const centerY = node.coordinates.y + radius;
+  
+  context.beginPath();
+  context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  context.lineWidth = 5; // Thicker
+  context.fill();
+  context.stroke();
+  context.lineWidth = 2;
+}
+
+// Intermediate event: double circle
+function drawIntermediateEvent(node) {
+  const radius = node.width / 2;
+  const centerX = node.coordinates.x + radius;
+  const centerY = node.coordinates.y + radius;
+  
+  // Outer circle
+  context.beginPath();
+  context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+  context.fill();
+  context.stroke();
+  
+  // Inner circle
+  context.beginPath();
+  context.arc(centerX, centerY, radius - 4, 0, Math.PI * 2);
+  context.stroke();
+
+  // Adds text
+  context.fillStyle = "black";
+  context.font = "12px Arial";
+  context.textAlign = "center";
+  context.fillText(node.name, centerX, centerY + node.height / 2 + 15);
 }
 
 

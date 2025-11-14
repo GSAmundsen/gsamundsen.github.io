@@ -1,6 +1,6 @@
 function verifier() {
-  const allNodes = getNodes();
-  const allConnectors = getConnectors();
+  const allNodes = model.currentScenario.nodes;
+  const allConnectors = model.currentScenario.connectors;
   
   let startNode = allNodes.find(n => n.type === "startEvent");
   if (!startNode) {
