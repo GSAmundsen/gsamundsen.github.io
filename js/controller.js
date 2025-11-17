@@ -444,4 +444,11 @@ function startGame() {
   updateLearningDisplay();
 }
 
+//  UI update function  
+function updateLearningDisplay() {
+  const val = document.getElementById("knowledgeValue");
+  if (val && player) {
+    val.textContent = player.knowledge.toFixed(2);
+  }
+}
 
