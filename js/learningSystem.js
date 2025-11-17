@@ -110,7 +110,7 @@ function updateLearningDisplay() {
 
 
 const scriptURL =
-  "https://script.google.com/macros/s/AKfycbwFpn6To7cNM82-3kPjH89Tm84bnhfdMYS3bgR-73up_mb6fjUILMBYTeiC3NmSwPPZ/exec";
+  "https://script.google.com/macros/s/AKfycbxS6wRIW1IAvgFjhtsthHJDKNC4PMqlFoR1TQuxhZTjp5S993_tSfBFD_gbQ684fuWp/exec";
 
 function sendToGoogleSheet(type, score, resultBinary) {
 
@@ -122,7 +122,7 @@ function sendToGoogleSheet(type, score, resultBinary) {
     timestamp: new Date().toLocaleString()
   };
 
-  console.log("📤 SENDING DATA:", data);
+  console.log("SENDING DATA:", data);
 
   fetch(scriptURL, {
     method: "POST",
