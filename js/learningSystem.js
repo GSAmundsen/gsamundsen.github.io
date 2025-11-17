@@ -87,7 +87,7 @@ function updateLearning(isCorrect) {
 //  GOOGLE SHEETS EXPORT
 
 const scriptURL =
-  "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
+  "https://script.google.com/macros/s/AKfycbzKIxd23UyD4DENXkkNDDKuFpwOFu76K4U0TbjU9j9_R-taX1hcDXXLukudLk7Hyuc6/exec";
 
 function sendToGoogleSheet(type, score, resultBinary) {
   const data = {
