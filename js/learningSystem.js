@@ -110,7 +110,7 @@ function updateLearningDisplay() {
 
 
 const scriptURL =
-  "https://script.google.com/macros/s/AKfycbz-UDFPlFvcJewuLVyNJhv-GL4HVDgyL9JD5sM-x5uGm8CyQHshwqeASVx0ewRxr91W/exec";
+  "https://script.google.com/macros/s/AKfycbwFpn6To7cNM82-3kPjH89Tm84bnhfdMYS3bgR-73up_mb6fjUILMBYTeiC3NmSwPPZ/exec";
 
 function sendToGoogleSheet(type, score, resultBinary) {
 
