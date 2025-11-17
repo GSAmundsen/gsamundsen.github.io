@@ -1,11 +1,11 @@
-// ================================================
+
 //  LEARNING SYSTEM (BKT + QUIZZES + GOOGLE SHEETS)
-// ================================================
 
 
-// ------------------------------------------------
+
+
 //  PLAYER OBJECT
-// ------------------------------------------------
+
 // Holds the player ID and all learning-related values
 let player = {
   id: "",
@@ -16,9 +16,9 @@ let player = {
 
 
 
-// ------------------------------------------------
+
 //  BAYESIAN KNOWLEDGE TRACING (BKT)
-// ------------------------------------------------
+
 // Simple model: increases if correct, decreases slightly if wrong
 class BKT {
   constructor(start = 0.3, learn = 0.2) {
@@ -40,9 +40,9 @@ let learner = new BKT();
 
 
 
-// ------------------------------------------------
+
 //  PRE-QUIZ RESULT HANDLER
-// ------------------------------------------------
+
 // Called once after the pre-quiz scenario finishes
 function recordPreQuizScore(correct, total) {
   const score = correct / total;
@@ -60,9 +60,9 @@ function recordPreQuizScore(correct, total) {
 
 
 
-// ------------------------------------------------
+
 //  POST-QUIZ RESULT HANDLER
-// ------------------------------------------------
+
 // Called once after the final scenario (post-quiz)
 function recordPostQuizScore(correct, total) {
   const score = correct / total;
@@ -75,9 +75,9 @@ function recordPostQuizScore(correct, total) {
 
 
 
-// ------------------------------------------------
+
 //  DURING GAME: UPDATE BKT LEARNING
-// ------------------------------------------------
+
 function updateLearning(isCorrect) {
   // Apply BKT update
   player.knowledge = learner.update(isCorrect);
@@ -93,9 +93,9 @@ function updateLearning(isCorrect) {
 
 
 
-// ------------------------------------------------
+
 //  UPDATE KNOWLEDGE IN UI
-// ------------------------------------------------
+
 function updateLearningDisplay() {
   const el = document.getElementById("knowledgeValue");
   if (el) {
@@ -105,9 +105,9 @@ function updateLearningDisplay() {
 
 
 
-// ------------------------------------------------
+
 //  GOOGLE SHEET EXPORT
-// ------------------------------------------------
+
 
 const scriptURL =
   "https://script.google.com/macros/s/AKfycbz-UDFPlFvcJewuLVyNJhv-GL4HVDgyL9JD5sM-x5uGm8CyQHshwqeASVx0ewRxr91W/exec";
