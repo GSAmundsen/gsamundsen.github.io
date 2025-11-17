@@ -78,8 +78,6 @@ function updateLearning(isCorrect) {
   // Send gameplay result to Google Sheets
   sendToGoogleSheet("GAME", player.knowledge, isCorrect ? 1 : 0);
 
-  // Update on-screen display (if exists)
-  updateLearningDisplay();
 }
 
 
@@ -97,6 +95,7 @@ function sendToGoogleSheet(type, score, resultBinary) {
     result: resultBinary,  // only for GAME; null for quizzes
     timestamp: new Date().toLocaleString()
   };
+  console.log("📤 DATA BEING SENT:", JSON.stringify(data));
 
   fetch(scriptURL, {
   method: "POST",
