@@ -1,63 +1,71 @@
+// ================================================
+//  LEARNING SYSTEM (BKT + QUIZZES + GOOGLE SHEETS)
+// ================================================
 
-//  LEARNING SYSTEM (BKT + QUIZ + GOOGLE SHEETS)
 
-
-
-// Player object for identification + tracking learning
+// ------------------------------------------------
+//  PLAYER OBJECT
+// ------------------------------------------------
+// Holds the player ID and all learning-related values
 let player = {
   id: "",
   preQuizScore: null,
   postQuizScore: null,
-  knowledge: 0.0        // This is the BKT running value during gameplay
+  knowledge: 0.0      // This changes during gameplay via BKT
 };
 
 
-//  Bayesian Knowledge Tracing 
 
+// ------------------------------------------------
+//  BAYESIAN KNOWLEDGE TRACING (BKT)
+// ------------------------------------------------
+// Simple model: increases if correct, decreases slightly if wrong
 class BKT {
   constructor(start = 0.3, learn = 0.2) {
-    this.P = start;     // starting probability of mastery
-    this.learn = learn; // learning rate
+    this.P = start;      // starting mastery probability
+    this.learn = learn;  // learning rate
   }
 
   update(isCorrect) {
-    // If correct → increase mastery
-    // If wrong → decrease a little
     this.P = isCorrect
-      ? this.P + (1 - this.P) * this.learn
-      : this.P * (1 - this.learn / 2);
+      ? this.P + (1 - this.P) * this.learn     // Correct answer → increases
+      : this.P * (1 - this.learn / 2);         // Wrong answer → decreases slightly
 
     return this.P;
   }
 }
 
-// Global BKT instance (gets overwritten when pre-quiz is done)
+// Current learner instance
 let learner = new BKT();
 
 
 
-//  PRE-QUIZ LOGIC (
-
-function recordPreQuizScore(correctAnswers, totalQuestions) {
-
-  const score = correctAnswers / totalQuestions;
+// ------------------------------------------------
+//  PRE-QUIZ RESULT HANDLER
+// ------------------------------------------------
+// Called once after the pre-quiz scenario finishes
+function recordPreQuizScore(correct, total) {
+  const score = correct / total;
   player.preQuizScore = score;
 
-  // Initialize BKT with pre-quiz score
+  // Pre-quiz defines starting BKT knowledge
   learner = new BKT(score);
   player.knowledge = score;
 
   console.log("Pre-quiz score:", score);
 
   sendToGoogleSheet("PRE", score, null);
+  updateLearningDisplay();
 }
 
 
 
-//  POST-QUIZ LOGIC (for comparison; does NOT touch game learning)
-function recordPostQuizScore(correctAnswers, totalQuestions) {
-
-  const score = correctAnswers / totalQuestions;
+// ------------------------------------------------
+//  POST-QUIZ RESULT HANDLER
+// ------------------------------------------------
+// Called once after the final scenario (post-quiz)
+function recordPostQuizScore(correct, total) {
+  const score = correct / total;
   player.postQuizScore = score;
 
   console.log("Post-quiz score:", score);
@@ -67,44 +75,61 @@ function recordPostQuizScore(correctAnswers, totalQuestions) {
 
 
 
-//  GAME LEARNING 
-
+// ------------------------------------------------
+//  DURING GAME: UPDATE BKT LEARNING
+// ------------------------------------------------
 function updateLearning(isCorrect) {
-  // Update BKT
+  // Apply BKT update
   player.knowledge = learner.update(isCorrect);
 
   console.log("Updated BKT knowledge:", player.knowledge.toFixed(2));
 
-  // Send gameplay result to Google Sheets
+  // Save gameplay learning event
   sendToGoogleSheet("GAME", player.knowledge, isCorrect ? 1 : 0);
 
+  // Update UI
+  updateLearningDisplay();
 }
 
 
 
-//  GOOGLE SHEETS EXPORT
+// ------------------------------------------------
+//  UPDATE KNOWLEDGE IN UI
+// ------------------------------------------------
+function updateLearningDisplay() {
+  const el = document.getElementById("knowledgeValue");
+  if (el) {
+    el.textContent = player.knowledge.toFixed(2);
+  }
+}
+
+
+
+// ------------------------------------------------
+//  GOOGLE SHEET EXPORT
+// ------------------------------------------------
 
 const scriptURL =
   "https://script.google.com/macros/s/AKfycbzPZyMD8e1EINxM4S9BZMeH3wBxHL964WT-QShLatY1UjFVdBfMDjuDiWJ4_NJVV1_I/exec";
 
 function sendToGoogleSheet(type, score, resultBinary) {
+
   const data = {
     playerId: player.id,
     recordType: type,      // "PRE", "GAME", "POST"
     score: score,
-    result: resultBinary,  // only for GAME; null for quizzes
+    result: resultBinary,  // null for quizzes, 1/0 for gameplay
     timestamp: new Date().toLocaleString()
   };
-  console.log("📤 DATA BEING SENT:", JSON.stringify(data));
+
+  console.log("📤 SENDING DATA:", data);
 
   fetch(scriptURL, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(data)
-})
-
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
     .then(() => console.log("Sent to Google Sheets:", data))
     .catch(err => console.error("Error sending to Google Sheets:", err));
 }
-
 
