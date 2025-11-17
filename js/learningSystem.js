@@ -99,11 +99,11 @@ function sendToGoogleSheet(type, score, resultBinary) {
   };
 
   fetch(scriptURL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  })
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(data)
+})
+
     .then(() => console.log("Sent to Google Sheets:", data))
     .catch(err => console.error("Error sending to Google Sheets:", err));
 }
