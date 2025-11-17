@@ -386,27 +386,7 @@ function verifySolution() {
   setTaskDescription(); //Updates the status of the task description, feedback to user (pass/fail)
   updateLearning(allTokensCorrect); // Updates the BKT learning model
 
-  // SENDER RESULTAT TIL GOOGLE SHEETS 
-  const data = {
-    id: player.id,
-    scenario: model.game.currentScenario + 1,
-    knowledge: player.knowledge,
-    result: allTokensCorrect ? 1 : 0,
-    timestamp: new Date().toLocaleString()
-  };
-
-
-  const scriptURL = "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
-
-  fetch(scriptURL, {
-    method: "POST",
-    mode: "no-cors", // Hindrer CORS-feil
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  })
-  .then(() => console.log("Resultat sendt til Google Sheet:", data))
-  .catch(err => console.error(" Feil ved sending til Google Sheet:", err));
-}
+ 
 
 
 
