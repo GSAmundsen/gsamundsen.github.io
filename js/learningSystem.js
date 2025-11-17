@@ -1,83 +1,111 @@
 
-// Learning analytics (BKT)
-// Player object - used to tie results to a user
+//  LEARNING SYSTEM (BKT + QUIZ + GOOGLE SHEETS)
+
+
+
+// Player object for identification + tracking learning
 let player = {
-  id: "",          // ID (initials + date, ex. TS2607)
-  knowledge: 0.0   // Knowledge level, updates through BKT
+  id: "",
+  preQuizScore: null,
+  postQuizScore: null,
+  knowledge: 0.0        // This is the BKT running value during gameplay
 };
 
-// Simplified version of Bayesian Knowledge Tracing (BKT)
+
+//  Bayesian Knowledge Tracing 
+
 class BKT {
   constructor(start = 0.3, learn = 0.2) {
-    this.P = start;    // Startnivå (fra quiz eller antatt)
-    this.learn = learn; // Hvor raskt spilleren lærer
+    this.P = start;     // starting probability of mastery
+    this.learn = learn; // learning rate
   }
 
-  // Oppdaterer sannsynligheten for læring basert på om spilleren gjør riktig eller feil
   update(isCorrect) {
+    // If correct → increase mastery
+    // If wrong → decrease a little
     this.P = isCorrect
-      ? this.P + (1 - this.P) * this.learn   // Øker hvis riktig
-      : this.P * (1 - this.learn / 2);       // Minker litt hvis feil
+      ? this.P + (1 - this.P) * this.learn
+      : this.P * (1 - this.learn / 2);
+
     return this.P;
   }
 }
-// Opprett en standard BKT-instans
+
+// Global BKT instance (gets overwritten when pre-quiz is done)
 let learner = new BKT();
 
-function loadQuizResult() {
-  let quizScore = 0.6; // Eksempel: 60 % riktig
-  player.knowledge = quizScore;
-  learner = new BKT(quizScore);
-  console.log("Startnivå fra quiz:", quizScore);
+
+
+//  PRE-QUIZ LOGIC (
+
+function recordPreQuizScore(correctAnswers, totalQuestions) {
+
+  const score = correctAnswers / totalQuestions;
+  player.preQuizScore = score;
+
+  // Initialize BKT with pre-quiz score
+  learner = new BKT(score);
+  player.knowledge = score;
+
+  console.log("Pre-quiz score:", score);
+
+  sendToGoogleSheet("PRE", score, null);
 }
 
 
 
-function updateLearning(isCorrect){
+//  POST-QUIZ LOGIC (for comparison; does NOT touch game learning)
+function recordPostQuizScore(correctAnswers, totalQuestions) {
 
-  // Updates the users learning level (BKT)
-  if (typeof learner !== "undefined") {
-    player.knowledge = learner.update(isCorrect);
-    console.log(`Oppdatert kunnskapsnivå: ${player.knowledge.toFixed(2)}`);
-  }
+  const score = correctAnswers / totalQuestions;
+  player.postQuizScore = score;
 
-  // Logs the result to the console (for the developer)
-  console.log(`Scenario ${model.game.currentScenario}: ${isCorrect ? "Riktig" : "Feil"}`);
+  console.log("Post-quiz score:", score);
 
- // Store learningdata locally in the browser
-const data = {
-  id: player.id,
-  scenario: model.game.currentScenario + 1, // Adds scenario number
-  knowledge: player.knowledge,
-  result: isCorrect ? 1 : 0,
-  timestamp: new Date().toLocaleString(),
-};
-
-// Stores the result in localStorage
-localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stringify(data));
-console.log("Læringsdata lagret:", data);
-
-
-// Eksporter automatisk til CSV etter hvert scenario
-//exportPlayerProgressToCSV(true); //Trenger ikke nedlasting under test. 
+  sendToGoogleSheet("POST", score, null);
 }
 
 
-// OPPDATERER KUNNSKAPSNIVÅ I VISNINGEN 
-function updateLearningDisplay() {
-  const val = document.getElementById("knowledgeValue");
-  if (val && player) val.textContent = player.knowledge.toFixed(2);
-}
 
-// OPPDATER VISNINGEN ETTER HVER VERIFISERING 
-// Denne "wrapper" verifySolution slik at kunnskapsnivået oppdateres automatisk etter brukeren sjekker løsningen
-const gammelVerify = verifySolution;
-verifySolution = function () {
-  gammelVerify();
+//  GAME LEARNING 
+
+function updateLearning(isCorrect) {
+  // Update BKT
+  player.knowledge = learner.update(isCorrect);
+
+  console.log("Updated BKT knowledge:", player.knowledge.toFixed(2));
+
+  // Send gameplay result to Google Sheets
+  sendToGoogleSheet("GAME", player.knowledge, isCorrect ? 1 : 0);
+
+  // Update on-screen display (if exists)
   updateLearningDisplay();
-};
+}
 
 
 
+//  GOOGLE SHEETS EXPORT
+
+const scriptURL =
+  "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
+
+function sendToGoogleSheet(type, score, resultBinary) {
+  const data = {
+    playerId: player.id,
+    recordType: type,      // "PRE", "GAME", "POST"
+    score: score,
+    result: resultBinary,  // only for GAME; null for quizzes
+    timestamp: new Date().toLocaleString()
+  };
+
+  fetch(scriptURL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  })
+    .then(() => console.log("Sent to Google Sheets:", data))
+    .catch(err => console.error("Error sending to Google Sheets:", err));
+}
 
 
