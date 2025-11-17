@@ -385,7 +385,7 @@ function verifySolution() {
 
   setTaskDescription(); //Updates the status of the task description, feedback to user (pass/fail)
   updateLearning(allTokensCorrect); // Updates the BKT learning model
-
+} 
  
 
 
