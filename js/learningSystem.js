@@ -105,31 +105,29 @@ function updateLearningDisplay() {
 
 
 
-
 //  GOOGLE SHEET EXPORT
 
-
 const scriptURL =
-  "https://script.google.com/macros/s/AKfycbwoM0gxgL0WC34Sa2BAiyoNIssORxey70X7-Nt_rGNmNepFVWu8JPQXa8P5FAF3-olP/exec";
+  "https://script.google.com/macros/s/AKfycbwm4ukHKoi-z5JlNNoH4jktlp7RmsasuIC2dYjpGIB6QIW_Vneu5mOtRq7SB7XX6VD7/exec"; 
 
 function sendToGoogleSheet(type, score, resultBinary) {
-
   const data = {
-    playerId: player.id,
-    recordType: type,      // "PRE", "GAME", "POST"
+    playerId: player.id || "",
+    recordType: type,        // "PRE", "GAME", "POST"
     score: score,
-    result: resultBinary,  // null for quizzes, 1/0 for gameplay
-    timestamp: new Date().toLocaleString()
+    result: resultBinary,    // null for quizzes, 1/0 for gameplay
+    timestamp: new Date().toISOString()
   };
 
-  console.log("SENDING DATA:", data);
+  console.log("📤 SENDING DATA:", data);
 
   fetch(scriptURL, {
     method: "POST",
+    mode: "no-cors",               // important: avoids CORS problems
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
   })
-    .then(() => console.log("Sent to Google Sheets:", data))
-    .catch(err => console.error("Error sending to Google Sheets:", err));
+    .then(() => console.log("✅ Sent to Google Sheets"))
+    .catch(err => console.error("❌ Error sending to Google Sheets:", err));
 }
 
