@@ -437,8 +437,6 @@ function startGame() {
   document.getElementById("loginSection").style.display = "none";
   document.getElementById("app").style.display = "block";
 
-  // Laster inn startverdi (quiz-score) og starter spillet
-  loadQuizResult();
 
   initCanvas();
 
