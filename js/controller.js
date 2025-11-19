@@ -393,7 +393,12 @@ function finishQuiz() {
   `;
 
   document.getElementById("quizContinue").onclick = () => {
+
     if (currentQuizType === "preQuiz") {
+
+      // SAVE PRE-QUIZ SCORE HERE
+      storePreQuizScore(quizScore, quizData.length);
+
       const start = quizScore / quizData.length;
       player.knowledge = start;
       learner = new BKT(start);
@@ -406,9 +411,16 @@ function finishQuiz() {
       return;
     }
 
-    if (currentQuizType === "postQuiz") endScreen();
+    if (currentQuizType === "postQuiz") {
+
+      // SAVE POST-QUIZ SCORE HERE
+      storePostQuizScore(quizScore, quizData.length);
+
+      endScreen();
+    }
   };
 }
+
 
 // Player clicks Start Game
 function startGame() {
