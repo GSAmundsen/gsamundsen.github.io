@@ -512,19 +512,22 @@ function startQuiz(type) {
 function showQuizQuestion() {
   const qObj = quizData[quizIndex];
 
-  // Pass question to UI handler
   showQuizUI(
     currentQuizType === "preQuiz" ? "Pre-Quiz" : "Post-Quiz",
     qObj,
     quizIndex,
     quizData.length,
     (selected) => {
-      // Check answer
-      if (selected === qObj.c) quizScore++;
+      // Convert user's selected letter (A/B/C/D) to numeric index 0–3
+      const selectedIndex = ["A", "B", "C", "D"].indexOf(selected);
 
+      // Compare with quiz JSON answer index
+      if (selectedIndex === qObj.c) {
+        quizScore++;
+      }
+
+      // Move to next question or end quiz
       quizIndex++;
-
-      // Continue or finish quiz
       if (quizIndex < quizData.length) {
         showQuizQuestion();
       } else {
@@ -533,6 +536,7 @@ function showQuizQuestion() {
     }
   );
 }
+
 
 // Shows score screen and handles what happens next
 function finishQuiz() {
