@@ -412,7 +412,7 @@ function finishQuiz() {
 
 // Player clicks Start Game
 function startGame() {
-  updateView();
+ 
 
   const initials = document.getElementById("initials").value.trim().toUpperCase();
   const day = document.getElementById("birthDay").value.trim().padStart(2, "0");
