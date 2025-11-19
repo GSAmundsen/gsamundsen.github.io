@@ -21,6 +21,11 @@ let menuCells = [];
 let currentUserSolution = []; 
 let testResults = []; //List of strings, PASS or FAIL. Index needs to match the corresponding entry in ScenarioPassengerTypes and ScenarioSolutions
 
+let quizData = null;
+let quizIndex = 0;
+let quizScore = 0;
+let currentQuizType = null;
+
 
 async function initCanvas() 
 {
@@ -327,8 +332,9 @@ function nextScenario() {
     loadScenarioData();
     draw();
   } else {
-    // showLinkToQuiz(); - handle later
+    startQuiz("postQuiz");
   }
+
 }
 
 // Når brukeren trykker ned musen
@@ -544,6 +550,64 @@ function endScreen(){
     `; 
 }
 
+function startQuiz(type) {
+  currentQuizType = type;
+  quizIndex = 0;
+  quizScore = 0;
+
+  quizData = model.loadedScenarioData.quizzes[type];
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  const qObj = quizData[quizIndex];
+  showQuizUI(
+    currentQuizType === "preQuiz" ? "Pre-Quiz" : "Post-Quiz",
+    qObj,
+    quizIndex,
+    quizData.length,
+    (selected) => {
+      if (selected === qObj.c) quizScore++;
+
+      quizIndex++;
+      if (quizIndex < quizData.length) {
+        showQuizQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+  );
+}
+
+function finishQuiz() {
+  document.getElementById('app').innerHTML = `
+    <h2>Score: ${quizScore}/${quizData.length}</h2>
+    <button id="quizContinue">Continue</button>
+  `;
+
+  document.getElementById("quizContinue").onclick = () => {
+
+    // PRE QUIZ: sets learning starting point
+    if (currentQuizType === "preQuiz") {
+      const start = quizScore / quizData.length;
+      player.knowledge = start;
+      learner = new BKT(start);
+      updateLearningDisplay();
+
+      loadScenarioInformation();
+      loadScenarioData();
+      initCanvas();
+      draw();
+      return;
+    }
+
+    // POST QUIZ: go to end screen
+    if (currentQuizType === "postQuiz") {
+      endScreen();
+    }
+  };
+}
+
 //  STARTSPILL-FUNKSJON 
 // Denne funksjonen kjører når brukeren trykker "Start spill"
 function startGame() {
@@ -572,9 +636,11 @@ function startGame() {
   document.getElementById("app").style.display = "block";
 
   // Laster inn startverdi (quiz-score) og starter spillet
-  loadQuizResult();
+ loadScenarioJSON("scenarioData/scenario.json").then(data => {
+  model.loadedScenarioData = data;
+  startQuiz("preQuiz");
+});
 
-  initCanvas();
 
   // Oppdaterer visning av kunnskapsnivå
   updateLearningDisplay();
