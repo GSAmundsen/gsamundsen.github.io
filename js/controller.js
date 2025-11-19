@@ -574,42 +574,39 @@ function finishQuiz() {
 // Handles beginning of gameplay when user clicks "Start Game"
 function startGame() {
 
-  // Render the main game UI structure (canvas area, buttons, headers)
+  // Show empty game container (no canvas yet)
   updateView();
 
-  // Get and clean login input values
+  // Read login form fields
   const initials = document.getElementById("initials").value.trim().toUpperCase();
   const day = document.getElementById("birthDay").value.trim().padStart(2, "0");
   const month = document.getElementById("birthMonth").value.trim().padStart(2, "0");
 
-  // Check that all fields are filled in
+  // Validate
   if (!initials || !day || !month) {
     alert("Vennligst fyll ut alle felt (initialer, dag og måned).");
     return;
   }
 
-  // Create a unique player ID, e.g. TS2607
+  // Build player ID
   const playerID = `${initials}${day}${month}`;
   player.id = playerID;
 
   console.log("Spiller-ID:", player.id);
 
-  // Hide the login panel and show the game container
+  // Hide login and show main area
   document.getElementById("loginSection").style.display = "none";
   document.getElementById("app").style.display = "block";
 
-  // Load all scenario + quiz data from JSON
+  // Load JSON and start quiz
   loadScenarioJSON("scenarioData/scenario.json").then(data => {
-
-    // Store the JSON data in the global model
     model.loadedScenarioData = data;
-
-    // Start the pre-quiz before loading any scenarios or canvas
     startQuiz("preQuiz");
   });
 
 
 }
+
 
 
 
