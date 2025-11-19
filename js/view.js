@@ -30,3 +30,32 @@ function updateView() {
 
    
 }
+
+function showQuizUI(title, questionObj, index, total, onSubmit) {
+  document.getElementById('app').innerHTML = `
+    <h2>${title}</h2>
+    <p><b>${index+1} / ${total}</b></p>
+    <p>${questionObj.q}</p>
+    <div id="quizOptions"></div>
+    <button id="quizNext">Next</button>
+  `;
+
+  const optionsDiv = document.getElementById("quizOptions");
+
+  questionObj.a.forEach((opt, i) => {
+    optionsDiv.innerHTML += `
+      <label style="display:block;">
+        <input type="radio" name="quizOpt" value="${i}"> ${opt}
+      </label>
+    `;
+  });
+
+  document.getElementById("quizNext").onclick = () => {
+    const selected = document.querySelector('input[name="quizOpt"]:checked');
+    if (!selected) {
+      alert("Please select an answer.");
+      return;
+    }
+    onSubmit(parseInt(selected.value));
+  };
+}
