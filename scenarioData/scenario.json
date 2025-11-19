@@ -11,6 +11,70 @@
     "numberOfScenarios": 5,
     "endScreenText": "Placeholder Placeholder Placeholder Placeholder Placeholder"
     },
+
+  "quizzes": {
+  "preQuiz": [
+    { "q": "What does a Start Event represent in BPMN?", 
+      "a": ["Where the process begins", "A decision point", "Something optional"], 
+      "c": 0 
+    },
+    { "q": "Which element represents work or tasks?", 
+      "a": ["Activity", "Gateway", "Event"], 
+      "c": 0 
+    },
+    { "q": "What does an XOR gateway do?", 
+      "a": ["Splits into all paths", "Chooses one path", "Loops back"], 
+      "c": 1 
+    },
+    { "q": "What does an AND gateway do?", 
+      "a": ["Activates all outgoing paths", "Activates none", "Activates one path"], 
+      "c": 0 
+    },
+    { "q": "What does an Inclusive (OR) gateway do?", 
+      "a": ["Activates all paths always", "Activates one or more depending on conditions", "It stops the flow"], 
+      "c": 1 
+    },
+    { "q": "Sequence Flows connect:", 
+      "a": ["Pools", "Lanes", "Flow objects like tasks and gateways"], 
+      "c": 2 
+    },
+    { "q": "End Events represent:", 
+      "a": ["A condition", "Where the process finishes", "A loop"], 
+      "c": 1 
+    }
+  ],
+  "postQuiz": [
+    { "q": "Which element evaluates conditions to choose a path?", 
+      "a": ["Event", "Gateway", "Activity"], 
+      "c": 1 
+    },
+    { "q": "An AND split means:", 
+      "a": ["Only one path is taken", "Multiple tokens go out", "No path is taken"], 
+      "c": 1 
+    },
+    { "q": "An XOR gateway allows:", 
+      "a": ["Exactly one outgoing path", "All paths", "None"], 
+      "c": 0 
+    },
+    { "q": "What do activities do?", 
+      "a": ["Make decisions", "Perform work", "End process"], 
+      "c": 1 
+    },
+    { "q": "What are Sequence Flows used for?", 
+      "a": ["To show order of execution", "To show ownership", "To decorate diagrams"], 
+      "c": 0 
+    },
+    { "q": "What does an End Event indicate?", 
+      "a": ["A timer", "A failed process", "A completed path"], 
+      "c": 2 
+    },
+    { "q": "Inclusive OR gateways:", 
+      "a": ["Always split into all paths", "Split into one or more paths depending on conditions", "Are only used in loops"], 
+      "c": 1 
+    }
+  ]
+},
+
   "scenarios": [
     {
       "scenarioId": "scenario_1",
