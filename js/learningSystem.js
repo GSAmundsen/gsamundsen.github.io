@@ -1,9 +1,12 @@
-
 // Learning analytics (BKT)
 // Player object - used to tie results to a user
 let player = {
   id: "",          // ID (initials + date, ex. TS2607)
-  knowledge: 0.0   // Knowledge level, updates through BKT
+  knowledge: 0.0,  // Knowledge level, updates through BKT
+
+  // ➕ NEW: Store pre-quiz and post-quiz learning scores
+  preQuizScore: null,
+  postQuizScore: null
 };
 
 // Simplified version of Bayesian Knowledge Tracing (BKT)
@@ -16,11 +19,12 @@ class BKT {
   // Oppdaterer sannsynligheten for læring basert på om spilleren gjør riktig eller feil
   update(isCorrect) {
     this.P = isCorrect
-      ? this.P + (1 - this.P) * this.learn   // Øker hvis riktig
-      : this.P * (1 - this.learn / 2);       // Minker litt hvis feil
+      ? this.P + (1 - this.P) * this.learn
+      : this.P * (1 - this.learn / 2);
     return this.P;
   }
 }
+
 // Opprett en standard BKT-instans
 let learner = new BKT();
 
@@ -33,25 +37,25 @@ function updateLearning(isCorrect){
     console.log(`Oppdatert kunnskapsnivå: ${player.knowledge.toFixed(2)}`);
   }
 
-  // Logs the result to the console (for the developer)
   console.log(`Scenario ${model.game.currentScenario}: ${isCorrect ? "Riktig" : "Feil"}`);
 
- // Store learningdata locally in the browser
-const data = {
-  id: player.id,
-  scenario: model.game.currentScenario + 1, // Adds scenario number
-  knowledge: player.knowledge,
-  result: isCorrect ? 1 : 0,
-  timestamp: new Date().toLocaleString(),
-};
+  // Store learningdata locally in the browser
+  const data = {
+    id: player.id,
+    scenario: model.game.currentScenario + 1,
+    knowledge: player.knowledge,
+    result: isCorrect ? 1 : 0,
+    timestamp: new Date().toLocaleString(),
+    
+    // ➕ NEW: store pre/post quiz in same record
+    preQuizScore: player.preQuizScore,
+    postQuizScore: player.postQuizScore
+  };
 
-// Stores the result in localStorage
-localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stringify(data));
-console.log("Læringsdata lagret:", data);
+  localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stringify(data));
+  console.log("Læringsdata lagret:", data);
 
-
-// Eksporter automatisk til CSV etter hvert scenario
-//exportPlayerProgressToCSV(true); //Trenger ikke nedlasting under test. 
+  //exportPlayerProgressToCSV(true);
 }
 
 
@@ -61,37 +65,47 @@ function updateLearningDisplay() {
   if (val && player) val.textContent = player.knowledge.toFixed(2);
 }
 
-// OPPDATER VISNINGEN ETTER HVER VERIFISERING 
-// Denne "wrapper" verifySolution slik at kunnskapsnivået oppdateres automatisk etter brukeren sjekker løsningen
+
+// Store pre-quiz score
+function storePreQuizScore(score, total) {
+  player.preQuizScore = score / total;
+  localStorage.setItem(`preQuiz_${player.id}`, player.preQuizScore);
+  console.log("PreQuiz score saved:", player.preQuizScore);
+}
+
+// Store post-quiz score
+function storePostQuizScore(score, total) {
+  player.postQuizScore = score / total;
+  localStorage.setItem(`postQuiz_${player.id}`, player.postQuizScore);
+  console.log("PostQuiz score saved:", player.postQuizScore);
+}
+
+
 const gammelVerify = verifySolution;
-// verifySolution = function () {
-//   gammelVerify();
-//   updateLearningDisplay();
-// };
 
 function verifySolution() {
-  // Run verifier
   const results = verifier();
   
-  // Determine if all correct
   const totalTokens = model.currentScenario.tokens.length;
-  const allTokensCorrect = results.verified.length === totalTokens && 
-                           results.nonVerified.length === 0 && 
-                           results.nonFinisher.length === 0;
+  const allTokensCorrect =
+    results.verified.length === totalTokens &&
+    results.nonVerified.length === 0 &&
+    results.nonFinisher.length === 0;
   
-  // Update learning model
   updateLearning(allTokensCorrect);
-  
-  // Display results to user
   displayVerificationResults(results);
-  
+
   // Send to Google Sheets
   const data = {
     id: player.id,
     scenario: model.game.currentScenario + 1,
     knowledge: player.knowledge,
     result: allTokensCorrect ? 1 : 0,
-    timestamp: new Date().toLocaleString()
+    timestamp: new Date().toLocaleString(),
+    
+    // ➕ NEW: Append quiz scores to Google Sheets
+    preQuizScore: player.preQuizScore,
+    postQuizScore: player.postQuizScore
   };
 
   const scriptURL = "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
@@ -106,6 +120,7 @@ function verifySolution() {
   .catch(err => console.error("Error sending to Google Sheet:", err));
 }
 
+
 function displayVerificationResults(results) {
   let html = "";
   
@@ -115,7 +130,6 @@ function displayVerificationResults(results) {
     const failuresToShow = results.verificationFailure.slice(0, 3);
     
     for (const failure of failuresToShow) {
-      // Extract variable from "Alice failed: token.CheckIn === true"
       const match = failure.match(/token\.(\w+)/);
       if (match) {
         const variableName = match[1];
@@ -123,7 +137,6 @@ function displayVerificationResults(results) {
         
         const descriptions = model.currentScenario.failureDescriptions?.[variableName];
         if (descriptions && descriptions.length > 0) {
-          // Random description for variety
           const randomDesc = descriptions[Math.floor(Math.random() * descriptions.length)];
           html += `${tokenName} ${randomDesc}<br>`;
         } else {
