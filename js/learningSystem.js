@@ -24,14 +24,6 @@ class BKT {
 // Opprett en standard BKT-instans
 let learner = new BKT();
 
-function loadQuizResult() {
-  let quizScore = 0.6; // Eksempel: 60 % riktig
-  player.knowledge = quizScore;
-  learner = new BKT(quizScore);
-  console.log("Startnivå fra quiz:", quizScore);
-}
-
-
 
 function updateLearning(isCorrect){
 
