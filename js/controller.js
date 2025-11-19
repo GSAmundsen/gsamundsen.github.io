@@ -509,32 +509,28 @@ function startQuiz(type) {
 }
 
 // Displays the current quiz question using showQuizUI()
-function showQuizQuestion() {
-  const qObj = quizData[quizIndex];
-
-  showQuizUI(
+showQuizUI(
     currentQuizType === "preQuiz" ? "Pre-Quiz" : "Post-Quiz",
     qObj,
     quizIndex,
     quizData.length,
     (selected) => {
-      // Convert user's selected letter (A/B/C/D) to numeric index 0–3
-      const selectedIndex = ["A", "B", "C", "D"].indexOf(selected);
 
-      // Compare with quiz JSON answer index
-      if (selectedIndex === qObj.c) {
-        quizScore++;
-      }
+        // selected is already numeric (0,1,2,3)
+        if (selected === qObj.c) {
+            quizScore++;
+        }
 
-      // Move to next question or end quiz
-      quizIndex++;
-      if (quizIndex < quizData.length) {
-        showQuizQuestion();
-      } else {
-        finishQuiz();
-      }
+        quizIndex++;
+
+        if (quizIndex < quizData.length) {
+            showQuizQuestion();
+        } else {
+            finishQuiz();
+        }
     }
   );
+
 }
 
 
