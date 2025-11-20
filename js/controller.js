@@ -423,7 +423,7 @@ function finishQuiz() {
 
 
 // Player clicks Start Game
-//function startGame() {
+function startGame() {
  
 
   const initials = document.getElementById("initials").value.trim().toUpperCase();
