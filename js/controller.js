@@ -392,7 +392,7 @@ function verifySolution() {
 
 //  STARTSPILL-FUNKSJON 
 // Denne funksjonen kjører når brukeren trykker "Start spill"
-//function startGame() {
+function startGame() {
 
   updateView();
 
