@@ -1,27 +1,38 @@
-//the model containing game data
-let model = {
-    settings:{
-        selectedBoxColor: 'rgba(171, 224, 224, 0.70)',
-        standardBoxColor: 'rgba(255, 255, 255, 1)',
-        laneBorderColor: 'rgba(99, 99, 99, 1)'
-    },
+const model = {
 
-    loadedScenarioData: null,
+  settings: {
+    selectedBoxColor: 'rgba(171, 224, 224, 0.70)',
+    standardBoxColor: 'rgba(255, 255, 255, 1)',
+    laneBorderColor: 'rgba(99, 99, 99, 1)'
+  },
 
-    game: { 
-        currentScenario: 0,
-        moduleTitle: "", 
-        moduleDescription: "", 
-        activityBoxWidth: 120, 
-        activityBoxHeight: 60,
-        gatewayBoxWidth: 60,
-        gatewayBoxHeight: 60
-    },
+  referanceCanvas: {
+    width: 1200,
+    height: 800
+  },
 
-    canvasProperties: {
-        width: window.screen.width*0.80,
-        height: window.screen.height*0.6,
-        backgroundColor: 'white'
-    },
+  canvasProperties: {
+    width: 1300,
+    height: 800,
+    backgroundColor: '#ffffff'
+  },
 
-}
+  loadedScenarioData: null,
+
+  game: {
+    currentScenario: 0,
+    numberOfScenarios: 0,
+    moduleTitle: null,
+    moduleDescription: null,
+    endScreenText: null
+  },
+
+  currentScenario: {
+    nodes: [],
+    connectors: [],
+    pools: [],
+    lanes: [],
+    tokens: [],
+    failureDescriptions: {}
+  }
+};
