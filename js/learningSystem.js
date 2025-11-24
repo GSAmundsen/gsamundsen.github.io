@@ -1,133 +1,233 @@
 
-//  LEARNING SYSTEM (BKT + QUIZZES + GOOGLE SHEETS)
+// LEARNING SYSTEM (BKT + PRE/POST QUIZ TRACKING)
 
 
-
-
-//  PLAYER OBJECT
-
-// Holds the player ID and all learning-related values
+// Player session data
 let player = {
   id: "",
+  knowledge: 0.0,
   preQuizScore: null,
-  postQuizScore: null,
-  knowledge: 0.0      // This changes during gameplay via BKT
+  postQuizScore: null
 };
 
 
+// BAYESIAN KNOWLEDGE TRACING
 
-
-//  BAYESIAN KNOWLEDGE TRACING (BKT)
-
-// Simple model: increases if correct, decreases slightly if wrong
 class BKT {
   constructor(start = 0.3, learn = 0.2) {
-    this.P = start;      // starting mastery probability
-    this.learn = learn;  // learning rate
+    this.P = start;
+    this.learn = learn;
   }
 
   update(isCorrect) {
     this.P = isCorrect
-      ? this.P + (1 - this.P) * this.learn     // Correct answer → increases
-      : this.P * (1 - this.learn / 2);         // Wrong answer → decreases slightly
+      ? this.P + (1 - this.P) * this.learn
+      : this.P * (1 - this.learn / 2);
 
     return this.P;
   }
 }
 
-// Current learner instance
 let learner = new BKT();
 
 
 
 
-//  PRE-QUIZ RESULT HANDLER
-
-// Called once after the pre-quiz scenario finishes
-function recordPreQuizScore(correct, total) {
-  const score = correct / total;
-  player.preQuizScore = score;
-
-  // Pre-quiz defines starting BKT knowledge
-  learner = new BKT(score);
-  player.knowledge = score;
-
-  console.log("Pre-quiz score:", score);
-
-  sendToGoogleSheet("PRE", score, null);
-  updateLearningDisplay();
-}
-
-
-
-
-//  POST-QUIZ RESULT HANDLER
-
-// Called once after the final scenario (post-quiz)
-function recordPostQuizScore(correct, total) {
-  const score = correct / total;
-  player.postQuizScore = score;
-
-  console.log("Post-quiz score:", score);
-
-  sendToGoogleSheet("POST", score, null);
-}
-
-
-
-
-//  DURING GAME: UPDATE BKT LEARNING
+// UPDATE KNOWLEDGE AFTER VERIFY
 
 function updateLearning(isCorrect) {
-  // Apply BKT update
-  player.knowledge = learner.update(isCorrect);
 
-  console.log("Updated BKT knowledge:", player.knowledge.toFixed(2));
+  if (typeof learner !== "undefined") {
+    player.knowledge = learner.update(isCorrect);
+  }
 
-  // Save gameplay learning event
-  sendToGoogleSheet("GAME", player.knowledge, isCorrect ? 1 : 0);
+  const data = {
+    type: "SCENARIO",
+    id: player.id,
+    scenario: model.game.currentScenario + 1,
+    result: isCorrect ? 1 : 0,
+    knowledge: player.knowledge,
+    preQuizScore: player.preQuizScore,
+    postQuizScore: player.postQuizScore,
+    timestamp: new Date().toLocaleString()
+  };
 
-  // Update UI
+  localStorage.setItem(
+    `learning_${player.id}_scenario${data.scenario}`,
+    JSON.stringify(data)
+  );
+
+  sendToGoogleSheet(data);
   updateLearningDisplay();
 }
 
 
 
 
-//  UPDATE KNOWLEDGE IN UI
+// PRE QUIZ SCORE
+
+function storePreQuizScore(score, total) {
+  const startLevel = score / total;   // 0–1
+
+  // Save player starting knowledge
+  player.preQuizScore = startLevel;
+  player.knowledge = startLevel;
+
+  // Reset BKT model starting at pre-quiz level
+  learner = new BKT(startLevel);
+
+  // Update bar UI (if visible)
+  updateLearningDisplay();
+
+  // Save to localStorage
+  localStorage.setItem(`preQuiz_${player.id}`, player.preQuizScore);
+
+  // Send clean row to sheet
+  const data = {
+    type: "PRE_QUIZ",
+    id: player.id,
+    scenario: "",
+    result: "",
+    knowledge: startLevel,
+    preQuizScore: startLevel,
+    postQuizScore: "",
+    timestamp: new Date().toLocaleString()
+  };
+
+  sendToGoogleSheet(data);
+
+  console.log("Pre-quiz starting knowledge set:", startLevel);
+}
+
+
+
+
+
+
+// POST QUIZ SCORE
+
+function storePostQuizScore(score, total) {
+  const value = score / total;
+
+  player.postQuizScore = value;
+
+  localStorage.setItem(`postQuiz_${player.id}`, value);
+
+  const data = {
+    type: "POST_QUIZ",
+    id: player.id,
+    scenario: "",
+    result: "",
+    knowledge: "",
+    preQuizScore: player.preQuizScore,
+    postQuizScore: value,
+    timestamp: new Date().toLocaleString()
+  };
+
+  sendToGoogleSheet(data);
+}
+
+
+
+
+// UPDATE KNOWLEDGE UI
 
 function updateLearningDisplay() {
   const el = document.getElementById("knowledgeValue");
-  if (el) {
-    el.textContent = player.knowledge.toFixed(2);
-  }
+  if (el) el.textContent = player.knowledge.toFixed(2);
 }
 
 
 
-//  GOOGLE SHEET EXPORT
 
-const scriptURL =
-  "https://script.google.com/macros/s/AKfycbwm4ukHKoi-z5JlNNoH4jktlp7RmsasuIC2dYjpGIB6QIW_Vneu5mOtRq7SB7XX6VD7/exec"; 
+// SEND TO GOOGLE SHEETS
 
-function sendToGoogleSheet(type, score, resultBinary) {
-  const data = {
-    playerId: player.id || "",
-    recordType: type,        // "PRE", "GAME", "POST"
-    score: score,
-    result: resultBinary,    // null for quizzes, 1/0 for gameplay
-    timestamp: new Date().toISOString()
-  };
-
-  console.log("📤 SENDING DATA:", data);
+function sendToGoogleSheet(payload) {
+  const scriptURL =
+    "https://script.google.com/macros/s/AKfycbzJOxQwZ4QgWNTBxPAw_x-_1Vc9k-yG-Mqzz62SWjGnRyjpSeSTpdBxE8_JjtmmYqlN/exec";
 
   fetch(scriptURL, {
     method: "POST",
-    mode: "no-cors",               // important: avoids CORS problems
+    mode: "no-cors",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+    body: JSON.stringify(payload)
   })
-    .then(() => console.log("✅ Sent to Google Sheets"))
-    .catch(err => console.error("❌ Error sending to Google Sheets:", err));
+    .then(() => console.log("Sent to Google Sheet:", payload))
+    .catch(err => console.error("Sheet send error:", err));
+}
+
+
+
+
+// VERIFY SOLUTION WRAPPER
+
+const _oldVerifySolution = verifySolution;
+
+function verifySolution() {
+  const results = verifier();
+
+  const totalTokens = model.currentScenario.tokens.length;
+
+  const allCorrect =
+    results.verified.length === totalTokens &&
+    results.nonVerified.length === 0 &&
+    results.nonFinisher.length === 0;
+
+  // Update learning level (BKT model)
+  updateLearning(allCorrect);
+
+  // Show the messages under the canvas
+  displayVerificationResults(results);
+
+  // Update visible UI bar
+  updateLearningDisplay();
+}
+
+
+
+
+
+// DISPLAY FAILURE MESSAGES
+
+function displayVerificationResults(results) {
+  let html = "";
+
+  // If absolutely everything passed
+  if (
+    results.verified.length > 0 &&
+    results.verified.length === model.currentScenario.tokens.length
+  ) {
+    html = `<span style='color: green;'>✓ All tokens passed!</span>`;
+  }
+
+  // Otherwise show meaningful failures
+  else {
+    const failuresToShow = results.verificationFailure.slice(0, 3);
+
+    for (const failure of failuresToShow) {
+      // Try to find variable responsible → token.X
+      const variableMatch = failure.match(/token\.(\w+)/);
+      const tokenName = failure.split(" ")[0];
+
+      if (variableMatch) {
+        const variable = variableMatch[1];
+
+        const descList =
+          model.currentScenario.failureDescriptions?.[variable];
+
+        if (descList?.length > 0) {
+          const msg =
+            descList[Math.floor(Math.random() * descList.length)];
+          html += `${tokenName} ${msg}<br>`;
+        } else {
+          html += `${tokenName} failed<br>`;
+        }
+      } else {
+        html += failure + "<br>";
+      }
+    }
+  }
+
+  document.getElementById("taskVerificationText").innerHTML = html;
 }
 
