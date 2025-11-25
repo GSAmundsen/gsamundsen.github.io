@@ -35,7 +35,13 @@ function showQuizQuestion() {
   const title = currentQuizType === "preQuiz" ? "Pre-Quiz" : "Post-Quiz";
 
   showQuizUI(title, qObj, quizIndex, quizData.length, selected => {
-    if (selected === qObj.c) quizScore++;
+
+    // Correct answer gets +1
+    // Wrong or "I don't know" gives 0
+    if (selected === qObj.c) {
+      quizScore++;
+    }
+
     quizIndex++;
 
     if (quizIndex < quizData.length) {
@@ -45,6 +51,7 @@ function showQuizQuestion() {
     }
   });
 }
+
 
 
 
