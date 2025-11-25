@@ -18,6 +18,8 @@ let connectorCounter = 1;
 
 // This array keeps track of which "menu slots" are occupied so nodes don’t overlap
 let menuCells = [];
+let nextMenuIndex = 0;
+
 
 // Quiz variables
 let quizData = null;
@@ -105,51 +107,62 @@ function loadScenarioInformation() {
 
 // Load scenario merged nodes
 function loadScenarioData() {
-  const scenario = model.loadedScenarioData.scenarios[model.game.currentScenario];
 
-  
-  menuCells = [];
-  model.currentScenario.nodes = [];
-  model.currentScenario.connectors = [];
-  model.currentScenario.pools = [];
-  model.currentScenario.lanes = [];
-  model.currentScenario.failureDescriptions = {};
+    const scenario = model.loadedScenarioData.scenarios[model.game.currentScenario];
 
-  // Load pools & lanes
-  model.currentScenario.pools = loadStaticElements(scenario.static.pools);
-  model.currentScenario.lanes = loadStaticElements(scenario.static.lanes);
+    // Always reset these
+    model.currentScenario.tokens = scenario.tokens || [];
+    model.currentScenario.failureDescriptions = scenario.failureDescriptions || {};
+    model.currentScenario.endEventChecks = scenario.endEventChecks || [];
 
-  // Replace tokens fully
-  model.currentScenario.tokens = scenario.tokens;
+    // Keep connectors across scenarios
+    model.currentScenario.connectors = model.currentScenario.connectors || [];
 
-  // Add nodes (NO merging)
-  model.currentScenario.nodes = processNodes(scenario.nodes);
+    // Only reset nodes if scenario requests it
+    if (scenario.resetCanvas === true) {
+        model.currentScenario.nodes = [];
+        menuCells = [];
+    }
 
-  // Merge failure descriptions
-  model.currentScenario.failureDescriptions = {
-    ...(scenario.failureDescriptions || {})
-  };
+    // Load pools + lanes
+    model.currentScenario.pools = loadStaticElements(scenario.static?.pools || []);
+    model.currentScenario.lanes = loadStaticElements(scenario.static?.lanes || []);
 
-  // Ensure end event exists
-  let endEvent = model.currentScenario.nodes.find(n => n.type === "endEvent");
-  if (!endEvent) {
-    const fallbackEnd = [{
-      type: "endEvent",
-      name: "End",
-      nodeId: "node_end",
-      functions: []
-    }];
-    const [processed] = processNodes(fallbackEnd);
-    model.currentScenario.nodes.push(processed);
-    endEvent = processed;
-  }
+    // Load new scenario nodes into menu
+    const newNodes = processNodes(scenario.nodes || []);
 
-  // Add scenario checks
-  endEvent.functions = [
-    ...(endEvent.functions || []),
-    ...(scenario.endEventChecks || [])
-  ];
+    const existingIds = new Set(model.currentScenario.nodes.map(n => n.nodeId));
+    const filteredNew = newNodes.filter(n => !existingIds.has(n.nodeId));
+
+    model.currentScenario.nodes.push(...filteredNew);
+
+    // Ensure end event exists
+    let endEvent = model.currentScenario.nodes.find(n => n.type === "endEvent");
+    if (!endEvent) {
+        const fallback = [{
+            type: "endEvent",
+            name: "End",
+            nodeId: "node_end",
+            functions: []
+        }];
+        const [processed] = processNodes(fallback);
+        model.currentScenario.nodes.push(processed);
+        endEvent = processed;
+    }
+
+    endEvent.functions = [
+        ...(endEvent.functions || []),
+        ...(scenario.endEventChecks || [])
+    ];
+
+    // NO vertical snapping anymore.
 }
+
+
+
+
+
+
 
 
 
@@ -204,7 +217,6 @@ function processNodes(scenarioNodes) {
   const baseY = model.canvasProperties.height;
   const cellsPerRow = Math.floor((model.canvasProperties.width - START_X) / CELL_WIDTH);
 
-  let cellIndex = 0;
   let maxRow = 0;
 
   for (const node of scenarioNodes) {
@@ -214,11 +226,14 @@ function processNodes(scenarioNodes) {
     p.height = node.type === "activity" ? 80 : 60;
 
     if (node.coordinates) {
+      // Use explicit coordinates from JSON
       p.coordinates = {
         x: scaleCoordinate(node.coordinates.x, "x"),
         y: scaleCoordinate(node.coordinates.y, "y")
       };
     } else {
+      // 🔥 Use global nextMenuIndex so we don't reuse old cells
+      let cellIndex = nextMenuIndex;
       while (menuCells[cellIndex]) cellIndex++;
 
       const row = Math.floor(cellIndex / cellsPerRow);
@@ -233,7 +248,7 @@ function processNodes(scenarioNodes) {
       };
 
       menuCells[cellIndex] = true;
-      cellIndex++;
+      nextMenuIndex = cellIndex + 1;
     }
 
     processed.push(p);
@@ -245,11 +260,29 @@ function processNodes(scenarioNodes) {
 }
 
 
+function rebuildConnectorGeometry() {
+    for (let conn of model.currentScenario.connectors) {
+
+        const from = model.currentScenario.nodes.find(n => n.nodeId === conn.fromNodeId);
+        const to   = model.currentScenario.nodes.find(n => n.nodeId === conn.toNodeId);
+
+        if (!from || !to) continue;
+
+        // Midpoints of each node — where the arrow should start/end
+        conn.startX = from.coordinates.x + from.width / 2;
+        conn.startY = from.coordinates.y + from.height / 2;
+
+        conn.endX = to.coordinates.x + to.width / 2;
+        conn.endY = to.coordinates.y + to.height / 2;
+    }
+}
+
 
 // DRAW
 function draw() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
+  rebuildConnectorGeometry();
   drawPools(model.currentScenario.pools);
   drawLanes(model.currentScenario.lanes);
   connectorCoordinates(model.currentScenario.connectors);
@@ -330,56 +363,94 @@ function mouseMove(e) {
 }
 
 function mouseUp(e) {
-  if (connecting && startNode) {
 
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
+    // FINISH CONNECTING MODE 
+    if (connecting && startNode) {
 
-    for (let n of model.currentScenario.nodes) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
 
-      const inside =
-        mx > n.coordinates.x &&
-        mx < n.coordinates.x + n.width &&
-        my > n.coordinates.y &&
-        my < n.coordinates.y + n.height;
+        for (let n of model.currentScenario.nodes) {
 
-      const notSame = n !== startNode;
+            const inside =
+                mx > n.coordinates.x &&
+                mx < n.coordinates.x + n.width &&
+                my > n.coordinates.y &&
+                my < n.coordinates.y + n.height;
 
-      if (inside && notSame) {
+            const different = n !== startNode;
 
-        const id = `connector_${connectorCounter++}`;
-        const newConn = {
-          connectorId: id,
-          fromNodeId: startNode.nodeId,
-          toNodeId: n.nodeId
-        };
+            if (inside && different) {
 
-        const exists = model.currentScenario.connectors.some(c =>
-          (c.fromNodeId === newConn.fromNodeId && c.toNodeId === newConn.toNodeId) ||
-          (c.fromNodeId === newConn.toNodeId && c.toNodeId === newConn.fromNodeId)
-        );
+                const id = `connector_${connectorCounter++}`;
 
-        if (!exists) {
-          model.currentScenario.connectors.push(newConn);
+                const exists = model.currentScenario.connectors.some(c =>
+                    (c.fromNodeId === startNode.nodeId && c.toNodeId === n.nodeId) ||
+                    (c.fromNodeId === n.nodeId && c.toNodeId === startNode.nodeId)
+                );
 
-          if (startNode.type.includes("Gateway")) {
-            if (!startNode.nodeConnections) startNode.nodeConnections = [];
-            startNode.nodeConnections.push({ connectorId: id });
-          }
+                if (!exists) {
+
+                    // Add connector
+                    model.currentScenario.connectors.push({
+                        connectorId: id,
+                        fromNodeId: startNode.nodeId,
+                        toNodeId: n.nodeId
+                    });
+
+                    
+                    //   GATEWAY RULES
+                    
+
+                    if (!startNode.nodeConnections)
+                        startNode.nodeConnections = [];
+
+                    // XOR Gateway → max 2 branches
+                    if (startNode.type === "xorGateway") {
+                        if (startNode.nodeConnections.length < 2) {
+                            startNode.nodeConnections.push({
+                                connectorId: id,
+                                condition: startNode.nodeConnections.length === 1
+                            });
+                        }
+                    }
+
+                    // OR / Inclusive Gateway → 1 branch per function
+                    else if (
+                        startNode.type === "inclusiveGateway" ||
+                        startNode.type === "orGateway"
+                    ) {
+                        const max = startNode.functions?.length || 0;
+                        if (startNode.nodeConnections.length < max) {
+                            startNode.nodeConnections.push({
+                                connectorId: id,
+                                functionIndex: startNode.nodeConnections.length
+                            });
+                        }
+                    }
+
+                    // AND Gateway → unlimited branches
+                    else if (startNode.type === "andGateway") {
+                        startNode.nodeConnections.push({ connectorId: id });
+                    }
+                }
+
+                break;
+            }
         }
 
-        break;
-      }
+        connecting = false;
+        startNode = null;
+        draw();
     }
 
-    connecting = false;
-    startNode = null;
-    draw();
-  }
-
-  draggingBox = null;
+    // FINISH DRAGGING MODE 
+    draggingBox = null;
 }
+
+
+
 
 
 
