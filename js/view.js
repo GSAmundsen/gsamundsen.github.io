@@ -12,13 +12,19 @@ function showQuizUI(title, qObj, index, total, callback) {
 
     <button class="quizBtn" id="opt0">${qObj.a[0]}</button><br><br>
     <button class="quizBtn" id="opt1">${qObj.a[1]}</button><br><br>
-    <button class="quizBtn" id="opt2">${qObj.a[2]}</button>
+    <button class="quizBtn" id="opt2">${qObj.a[2]}</button><br><br>
+
+    <button class="quizBtn" id="opt3" style="background:#ddd;">
+      I don't know
+    </button>
   `;
 
   document.getElementById("opt0").onclick = () => callback(0);
   document.getElementById("opt1").onclick = () => callback(1);
   document.getElementById("opt2").onclick = () => callback(2);
+  document.getElementById("opt3").onclick = () => callback(3);  // neutral option
 }
+
 
 
 
