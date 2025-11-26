@@ -66,7 +66,7 @@ async function initCanvas() {
   context = canvas.getContext("2d");
 
   canvas.width = model.canvasProperties.width;
-  canvas.height = model.canvasProperties.height + 120;
+  canvas.height = model.canvasProperties.height + 100;
 
   context.fillStyle = model.canvasProperties.backgroundColor;
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -129,6 +129,8 @@ function loadScenarioData() {
     if (scenario.resetCanvas === true) {
         model.currentScenario.nodes = [];
         menuCells = [];
+        nextMenuIndex = 0;
+        model.currentScenario.connectors = [];
     }
 
     // Load pools + lanes
@@ -161,6 +163,7 @@ function loadScenarioData() {
         ...(endEvent.functions || []),
         ...(scenario.endEventChecks || [])
     ];
+    console.log(endEvent.functions)
 
     // NO vertical snapping anymore.
 }
@@ -213,59 +216,74 @@ function scaleCoordinate(coord, dimension) {
 
 
 
-// Node placement (menu)
 function processNodes(scenarioNodes) {
-
   const processed = [];
   const CELL_WIDTH = 140;
   const CELL_HEIGHT = 100;
   const START_X = 50;
-
-  const baseY = model.canvasProperties.height;
-  const cellsPerRow = Math.floor((model.canvasProperties.width - START_X) / CELL_WIDTH);
-
+  const BASE_HEIGHT = model.canvasProperties.height;
+  const MENU_START_Y = BASE_HEIGHT;
+  const CELLS_PER_ROW = Math.floor((canvas.width - START_X) / CELL_WIDTH);
+  
+  if (menuCells.length > 0) {
+    for (const node of model.currentScenario.nodes || []) {
+      if (node.coordinates?.y >= MENU_START_Y - 10) {
+        const cellX = Math.floor((node.coordinates.x - START_X) / CELL_WIDTH);
+        const cellY = Math.floor((node.coordinates.y - MENU_START_Y) / CELL_HEIGHT);
+        const cellIndex = cellY * CELLS_PER_ROW + cellX;
+        menuCells[cellIndex] = true;
+      }
+    }
+  }
+  
+  let cellIndex = 0;
   let maxRow = 0;
-
+  
   for (const node of scenarioNodes) {
-    const p = { ...node };
-
-    p.width = node.type === "activity" ? 120 : 60;
-    p.height = node.type === "activity" ? 80 : 60;
-
+    const processedNode = { ...node };
+    
+    if (node.type === "activity") {
+      processedNode.width = 120;
+      processedNode.height = 80;
+    } else {
+      processedNode.width = 60;
+      processedNode.height = 60;
+    }
+    
     if (node.coordinates) {
-      // Use explicit coordinates from JSON
-      p.coordinates = {
-        x: scaleCoordinate(node.coordinates.x, "x"),
-        y: scaleCoordinate(node.coordinates.y, "y")
+      processedNode.coordinates = {
+        x: scaleCoordinate(node.coordinates.x, 'x'),
+        y: scaleCoordinate(node.coordinates.y, 'y')
       };
     } else {
-      // 🔥 Use global nextMenuIndex so we don't reuse old cells
-      let cellIndex = nextMenuIndex;
       while (menuCells[cellIndex]) cellIndex++;
-
-      const row = Math.floor(cellIndex / cellsPerRow);
-      const col = cellIndex % cellsPerRow;
+      
+      const row = Math.floor(cellIndex / CELLS_PER_ROW);
+      const col = cellIndex % CELLS_PER_ROW;
+      
       maxRow = Math.max(maxRow, row);
-
-      const offset = (CELL_WIDTH - p.width) / 2;
-
-      p.coordinates = {
-        x: START_X + col * CELL_WIDTH + offset,
-        y: baseY + row * CELL_HEIGHT
+      
+      // Center smaller nodes in cell
+      const xOffset = (CELL_WIDTH - processedNode.width) / 2;
+       
+      processedNode.coordinates = {
+        x: START_X + (col * CELL_WIDTH) + xOffset,
+        y: MENU_START_Y + (row * CELL_HEIGHT)
       };
-
+      
       menuCells[cellIndex] = true;
-      nextMenuIndex = cellIndex + 1;
+      cellIndex++;
     }
-
-    processed.push(p);
+    console.log("test");
+    processed.push(processedNode);
   }
-
-  canvas.height = baseY + (maxRow + 1) * CELL_HEIGHT + 50;
-
+  
+  // Adjust canvas height based on menu rows
+  const menuRows = maxRow + 1;
+  canvas.height = BASE_HEIGHT + (menuRows * CELL_HEIGHT);
+  
   return processed;
 }
-
 
 function rebuildConnectorGeometry() {
     for (let conn of model.currentScenario.connectors) {
@@ -370,117 +388,138 @@ function mouseMove(e) {
 }
 
 function mouseUp(e) {
+  // If connecting
+  if (connecting && startNode) {
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
 
-    // FINISH CONNECTING MODE 
-    if (connecting && startNode) {
+    for (let node of model.currentScenario.nodes) {
+      if (
+        mouseX > node.coordinates.x && mouseX < node.coordinates.x + node.width &&
+        mouseY > node.coordinates.y && mouseY < node.coordinates.y + node.height &&
+        node !== startNode
+      ) {
+        // Create connector
+        const connector_id = `connector_${connectorCounter++}`;
+        const newConn = {
+          connectorId: connector_id,
+          fromNodeId: startNode.nodeId,
+          toNodeId: node.nodeId
+        };
 
-        const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-
-        for (let n of model.currentScenario.nodes) {
-
-            const inside =
-                mx > n.coordinates.x &&
-                mx < n.coordinates.x + n.width &&
-                my > n.coordinates.y &&
-                my < n.coordinates.y + n.height;
-
-            const different = n !== startNode;
-
-            if (inside && different) {
-
-                const id = `connector_${connectorCounter++}`;
-
-                const exists = model.currentScenario.connectors.some(c =>
-                    (c.fromNodeId === startNode.nodeId && c.toNodeId === n.nodeId) ||
-                    (c.fromNodeId === n.nodeId && c.toNodeId === startNode.nodeId)
-                );
-
-                if (!exists) {
-
-                    // Add connector
-                    model.currentScenario.connectors.push({
-                        connectorId: id,
-                        fromNodeId: startNode.nodeId,
-                        toNodeId: n.nodeId
-                    });
-
-                    
-                    //   GATEWAY RULES
-                    
-
-                    if (!startNode.nodeConnections)
-                        startNode.nodeConnections = [];
-
-                    // XOR Gateway → max 2 branches
-                    if (startNode.type === "xorGateway") {
-                        if (startNode.nodeConnections.length < 2) {
-                            startNode.nodeConnections.push({
-                                connectorId: id,
-                                condition: startNode.nodeConnections.length === 1
-                            });
-                        }
-                    }
-
-                    // OR / Inclusive Gateway → 1 branch per function
-                    else if (
-                        startNode.type === "inclusiveGateway" ||
-                        startNode.type === "orGateway"
-                    ) {
-                        const max = startNode.functions?.length || 0;
-                        if (startNode.nodeConnections.length < max) {
-                            startNode.nodeConnections.push({
-                                connectorId: id,
-                                functionIndex: startNode.nodeConnections.length
-                            });
-                        }
-                    }
-
-                    // AND Gateway → unlimited branches
-                    else if (startNode.type === "andGateway") {
-                        startNode.nodeConnections.push({ connectorId: id });
-                    }
-                }
-
-                break;
+        // Check if connection already exists
+        if (!model.currentScenario.connectors.some(c => 
+          (c.fromNodeId === newConn.fromNodeId && c.toNodeId === newConn.toNodeId) ||
+          (c.fromNodeId === newConn.toNodeId && c.toNodeId === newConn.fromNodeId)
+        )) {
+          
+          // Gateway-specific logic
+          switch (startNode.type) {
+            case "xorGateway": {
+              startNode.nodeConnections = startNode.nodeConnections || [];
+              
+              if (startNode.nodeConnections.length >= 2) {
+                break; // XOR max 2 connections
+              }
+              
+              const hasTrueConnection = startNode.nodeConnections.some(nc => nc.condition === true);
+  
+              startNode.nodeConnections.push({
+                connectorId: connector_id,
+                condition: !hasTrueConnection // TRUE if no true exists, FALSE otherwise
+              });
+              
+              model.currentScenario.connectors.push(newConn);
+              break;
             }
+            
+            case "andGateway": {
+              startNode.nodeConnections = startNode.nodeConnections || [];
+              startNode.nodeConnections.push({ connectorId: connector_id });
+              model.currentScenario.connectors.push(newConn);
+              break;
+            }
+            
+            case "inclusiveGateway": {
+              startNode.nodeConnections = startNode.nodeConnections || [];
+              startNode.functions = startNode.functions || [];
+              
+              const index = startNode.nodeConnections.length;
+              
+              if (index >= startNode.functions.length) {
+                break; // Can't exceed defined functions
+              }
+              
+              startNode.nodeConnections.push({
+                connectorId: connector_id,
+                functionIndex: index
+              });
+              
+              model.currentScenario.connectors.push(newConn);
+              break;
+            }
+            
+            default: {
+              // Regular nodes - just add connector
+              model.currentScenario.connectors.push(newConn);
+            }
+          }
         }
-
-        connecting = false;
-        startNode = null;
-        draw();
+        break;
+      }
     }
+    
+    connecting = false;
+    startNode = null;
+    draw();
+  }
 
-    // FINISH DRAGGING MODE 
-    draggingBox = null;
+  draggingBox = null;
 }
 
-
-
-
-
-
-// Reset connectors
 function resetConnections(resetAll = false) {
-
   if (resetAll) {
     model.currentScenario.connectors = [];
+    for (const node of model.currentScenario.nodes) {
+      if (node.type.includes("Gateway")) {
+        node.nodeConnections = [];
+      }
+    }
     draw();
     return;
   }
 
   if (model.currentScenario.connectors.length === 0) return;
 
-  if (currentSelectedBox) {
-    const id = currentSelectedBox.nodeId;
-    model.currentScenario.connectors =
-      model.currentScenario.connectors.filter(c =>
-        c.fromNodeId !== id && c.toNodeId !== id
-      );
+  let deletedIds = [];
+
+  if (currentSelectedBox != null) {
+    // Collect IDs being deleted
+    deletedIds = model.currentScenario.connectors
+      .filter(c => c.fromNodeId === currentSelectedBox.nodeId || c.toNodeId === currentSelectedBox.nodeId)
+      .map(c => c.connectorId);
+    
+    // Delete connectors
+    model.currentScenario.connectors = model.currentScenario.connectors.filter(conn => 
+      conn.fromNodeId !== currentSelectedBox.nodeId && 
+      conn.toNodeId !== currentSelectedBox.nodeId
+    );
   } else {
-    model.currentScenario.connectors.pop();
+    // Delete last
+    const deleted = model.currentScenario.connectors.pop();
+    deletedIds = [deleted.connectorId];
   }
+
+  // Clean gateway nodeConnections
+  for (const node of model.currentScenario.nodes) {
+    if (node.type.includes("Gateway") && node.nodeConnections) {
+      node.nodeConnections = node.nodeConnections.filter(nc => 
+        !deletedIds.includes(nc.connectorId)
+      );
+    }
+  }
+
 
   draw();
 }

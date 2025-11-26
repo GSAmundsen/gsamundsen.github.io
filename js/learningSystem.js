@@ -200,30 +200,48 @@ function displayVerificationResults(results) {
     html = `<span style='color: green;'>✓ All tokens passed!</span>`;
   }
 
-  // Otherwise show meaningful failures
+  // Otherwise show failures (max 3 total)
   else {
-    const failuresToShow = results.verificationFailure.slice(0, 3);
+    let messageCount = 0;
+    const MAX_MESSAGES = 3;
 
-    for (const failure of failuresToShow) {
-      // Try to find variable responsible → token.X
-      const variableMatch = failure.match(/token\.(\w+)/);
-      const tokenName = failure.split(" ")[0];
+    // PRIORITY 1: NON-FINISHERS
+    if (results.nonFinisher.length > 0) {
+      const messages = [
+        "didn't make it to the plane."
+      ];
+      
+      for (const token of results.nonFinisher) {
+        if (messageCount >= MAX_MESSAGES) break;
+        
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        html += `<span style='color: orange;'>${token.name} ${msg}</span><br>`;
+        messageCount++;
+      }
+    }
 
-      if (variableMatch) {
-        const variable = variableMatch[1];
+    if (messageCount < MAX_MESSAGES) {
+      for (const failure of results.verificationFailure) {
+        if (messageCount >= MAX_MESSAGES) break;
 
-        const descList =
-          model.currentScenario.failureDescriptions?.[variable];
+        const variableMatch = failure.match(/token\.(\w+)/);
+        const tokenName = failure.split(" ")[0];
 
-        if (descList?.length > 0) {
-          const msg =
-            descList[Math.floor(Math.random() * descList.length)];
-          html += `${tokenName} ${msg}<br>`;
+        if (variableMatch) {
+          const variable = variableMatch[1];
+          const descList = model.currentScenario.failureDescriptions?.[variable];
+
+          if (descList?.length > 0) {
+            const msg = descList[Math.floor(Math.random() * descList.length)];
+            html += `${tokenName} ${msg}<br>`;
+          } else {
+            html += `${tokenName} failed<br>`;
+          }
         } else {
-          html += `${tokenName} failed<br>`;
+          html += failure + "<br>";
         }
-      } else {
-        html += failure + "<br>";
+        
+        messageCount++;
       }
     }
   }
