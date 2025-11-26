@@ -1,145 +1,232 @@
 
-// Learning analytics (BKT)
-// Player object - used to tie results to a user
+// LEARNING SYSTEM (BKT + PRE/POST QUIZ TRACKING)
+
+
+// Player session data
 let player = {
-  id: "",          // ID (initials + date, ex. TS2607)
-  knowledge: 0.0   // Knowledge level, updates through BKT
+  id: "",
+  knowledge: 0.0,
+  preQuizScore: null,
+  postQuizScore: null
 };
 
-// Simplified version of Bayesian Knowledge Tracing (BKT)
+
+// BAYESIAN KNOWLEDGE TRACING
+
 class BKT {
   constructor(start = 0.3, learn = 0.2) {
-    this.P = start;    // Startnivå (fra quiz eller antatt)
-    this.learn = learn; // Hvor raskt spilleren lærer
+    this.P = start;
+    this.learn = learn;
   }
 
-  // Oppdaterer sannsynligheten for læring basert på om spilleren gjør riktig eller feil
   update(isCorrect) {
     this.P = isCorrect
-      ? this.P + (1 - this.P) * this.learn   // Øker hvis riktig
-      : this.P * (1 - this.learn / 2);       // Minker litt hvis feil
+      ? this.P + (1 - this.P) * this.learn
+      : this.P * (1 - this.learn / 2);
+
     return this.P;
   }
 }
-// Opprett en standard BKT-instans
+
 let learner = new BKT();
 
-function loadQuizResult() {
-  let quizScore = 0.6; // Eksempel: 60 % riktig
-  player.knowledge = quizScore;
-  learner = new BKT(quizScore);
-  console.log("Startnivå fra quiz:", quizScore);
-}
 
 
 
-function updateLearning(isCorrect){
+// UPDATE KNOWLEDGE AFTER VERIFY
 
-  // Updates the users learning level (BKT)
+function updateLearning(isCorrect) {
+
   if (typeof learner !== "undefined") {
     player.knowledge = learner.update(isCorrect);
-    console.log(`Oppdatert kunnskapsnivå: ${player.knowledge.toFixed(2)}`);
   }
 
-  // Logs the result to the console (for the developer)
-  console.log(`Scenario ${model.game.currentScenario}: ${isCorrect ? "Riktig" : "Feil"}`);
-
- // Store learningdata locally in the browser
-const data = {
-  id: player.id,
-  scenario: model.game.currentScenario + 1, // Adds scenario number
-  knowledge: player.knowledge,
-  result: isCorrect ? 1 : 0,
-  timestamp: new Date().toLocaleString(),
-};
-
-// Stores the result in localStorage
-localStorage.setItem(`learning_${player.id}_scenario${data.scenario}`, JSON.stringify(data));
-console.log("Læringsdata lagret:", data);
-
-
-// Eksporter automatisk til CSV etter hvert scenario
-//exportPlayerProgressToCSV(true); //Trenger ikke nedlasting under test. 
-}
-
-
-// OPPDATERER KUNNSKAPSNIVÅ I VISNINGEN 
-function updateLearningDisplay() {
-  const val = document.getElementById("knowledgeValue");
-  if (val && player) val.textContent = player.knowledge.toFixed(2);
-}
-
-// OPPDATER VISNINGEN ETTER HVER VERIFISERING 
-// Denne "wrapper" verifySolution slik at kunnskapsnivået oppdateres automatisk etter brukeren sjekker løsningen
-const gammelVerify = verifySolution;
-// verifySolution = function () {
-//   gammelVerify();
-//   updateLearningDisplay();
-// };
-
-function verifySolution() {
-  // Run verifier
-  const results = verifier();
-  
-  // Determine if all correct
-  const totalTokens = model.currentScenario.tokens.length;
-  const allTokensCorrect = results.verified.length === totalTokens && 
-                           results.nonVerified.length === 0 && 
-                           results.nonFinisher.length === 0;
-  
-  // Update learning model
-  updateLearning(allTokensCorrect);
-  
-  // Display results to user
-  displayVerificationResults(results);
-  
-  // Send to Google Sheets
   const data = {
+    type: "SCENARIO",
     id: player.id,
     scenario: model.game.currentScenario + 1,
+    result: isCorrect ? 1 : 0,
     knowledge: player.knowledge,
-    result: allTokensCorrect ? 1 : 0,
+    preQuizScore: player.preQuizScore,
+    postQuizScore: player.postQuizScore,
     timestamp: new Date().toLocaleString()
   };
 
-  const scriptURL = "https://script.google.com/macros/s/AKfycbx7CqDQsiNZVBDWAxEFP4Y_Z9AaDW1GIs7xWCRwCheq_cDFYs_gUavNV-HTdsXsYMvW/exec";
+  localStorage.setItem(
+    `learning_${player.id}_scenario${data.scenario}`,
+    JSON.stringify(data)
+  );
 
-  fetch(scriptURL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
-  })
-  .then(() => console.log("Result sent to Google Sheet:", data))
-  .catch(err => console.error("Error sending to Google Sheet:", err));
+  sendToGoogleSheet(data);
 }
+
+
+
+
+// PRE QUIZ SCORE
+
+function storePreQuizScore(score, total) {
+  const startLevel = score / total;   // 0–1
+
+  // Save player starting knowledge
+  player.preQuizScore = startLevel;
+  player.knowledge = startLevel;
+
+  // Reset BKT model starting at pre-quiz level
+  learner = new BKT(startLevel);
+
+  // Save to localStorage
+  localStorage.setItem(`preQuiz_${player.id}`, player.preQuizScore);
+
+  // Send clean row to sheet
+  const data = {
+    type: "PRE_QUIZ",
+    id: player.id,
+    scenario: "",
+    result: "",
+    knowledge: startLevel,
+    preQuizScore: startLevel,
+    postQuizScore: "",
+    timestamp: new Date().toLocaleString()
+  };
+
+  sendToGoogleSheet(data);
+
+  console.log("Pre-quiz starting knowledge set:", startLevel);
+}
+
+
+
+
+
+
+// POST QUIZ SCORE
+
+function storePostQuizScore(score, total) {
+  const value = score / total;
+
+  player.postQuizScore = value;
+
+  localStorage.setItem(`postQuiz_${player.id}`, value);
+
+  const data = {
+    type: "POST_QUIZ",
+    id: player.id,
+    scenario: "",
+    result: "",
+    knowledge: "",
+    preQuizScore: player.preQuizScore,
+    postQuizScore: value,
+    timestamp: new Date().toLocaleString()
+  };
+
+  sendToGoogleSheet(data);
+}
+
+
+// SEND TO GOOGLE SHEETS
+
+function sendToGoogleSheet(payload) {
+  const scriptURL =
+    "https://script.google.com/macros/s/AKfycbzJOxQwZ4QgWNTBxPAw_x-_1Vc9k-yG-Mqzz62SWjGnRyjpSeSTpdBxE8_JjtmmYqlN/exec";
+
+  // fetch(scriptURL, {
+  //   method: "POST",
+  //   mode: "no-cors",
+  //   headers: { "Content-Type": "application/json" },
+  //   body: JSON.stringify(payload)
+  // })
+  //   .then(() => console.log("Sent to Google Sheet:", payload))
+  //   .catch(err => console.error("Sheet send error:", err));
+}
+
+
+
+
+// VERIFY SOLUTION WRAPPER
+
+// const _oldVerifySolution = verifySolution;
+
+function verifySolution() {
+  const results = verifier();
+
+  const totalTokens = model.currentScenario.tokens.length;
+
+  const allCorrect =
+    results.verified.length === totalTokens &&
+    results.nonVerified.length === 0 &&
+    results.nonFinisher.length === 0;
+
+  // Update learning level (BKT model)
+  updateLearning(allCorrect);
+
+  // Show the messages under the canvas
+  displayVerificationResults(results);
+}
+
+
+
+
+
+// DISPLAY FAILURE MESSAGES
 
 function displayVerificationResults(results) {
   let html = "";
-  
-  if (results.verified.length === model.currentScenario.tokens.length) {
+
+  // If absolutely everything passed
+  if (
+    results.verified.length > 0 &&
+    results.verified.length === model.currentScenario.tokens.length
+  ) {
     html = `<span style='color: green;'>✓ All tokens passed!</span>`;
-  } else {
-    const failuresToShow = results.verificationFailure.slice(0, 3);
-    
-    for (const failure of failuresToShow) {
-      // Extract variable from "Alice failed: token.CheckIn === true"
-      const match = failure.match(/token\.(\w+)/);
-      if (match) {
-        const variableName = match[1];
-        const tokenName = failure.split(' ')[0];
+  }
+
+  // Otherwise show failures (max 3 total)
+  else {
+    let messageCount = 0;
+    const MAX_MESSAGES = 3;
+
+    // PRIORITY 1: NON-FINISHERS
+    if (results.nonFinisher.length > 0) {
+      const messages = [
+        "didn't make it to the plane."
+      ];
+      
+      for (const token of results.nonFinisher) {
+        if (messageCount >= MAX_MESSAGES) break;
         
-        const descriptions = model.currentScenario.failureDescriptions?.[variableName];
-        if (descriptions && descriptions.length > 0) {
-          // Random description for variety
-          const randomDesc = descriptions[Math.floor(Math.random() * descriptions.length)];
-          html += `${tokenName} ${randomDesc}<br>`;
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        html += `<span style='color: orange;'>${token.name} ${msg}</span><br>`;
+        messageCount++;
+      }
+    }
+
+    if (messageCount < MAX_MESSAGES) {
+      for (const failure of results.verificationFailure) {
+        if (messageCount >= MAX_MESSAGES) break;
+
+        const variableMatch = failure.match(/token\.(\w+)/);
+        const tokenName = failure.split(" ")[0];
+
+        if (variableMatch) {
+          const variable = variableMatch[1];
+          const descList = model.currentScenario.failureDescriptions?.[variable];
+
+          if (descList?.length > 0) {
+            const msg = descList[Math.floor(Math.random() * descList.length)];
+            html += `${tokenName} ${msg}<br>`;
+          } else {
+            html += `${tokenName} failed<br>`;
+          }
         } else {
-          html += `${tokenName} failed check<br>`;
+          html += failure + "<br>";
         }
+        
+        messageCount++;
       }
     }
   }
-  
-  document.getElementById('taskVerificationText').innerHTML = html;
+
+  document.getElementById("taskVerificationText").innerHTML = html;
 }
+

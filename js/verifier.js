@@ -1,3 +1,7 @@
+
+// Is called by learningSystem.js - verifySolution()
+// Takes the tokens through the model created by the user
+// Checks if (1) alle the nodes make it through and (2) if they are in the right state once they finish
 function verifier() {
   const allNodes = model.currentScenario.nodes;
   const allConnectors = model.currentScenario.connectors;
@@ -133,11 +137,11 @@ function verifier() {
     }
   }
 
-  console.log("✅ Verified:", verified.map(t => t.name));
-  console.log("❌ Non-verified:", nonVerified.map(t => t.name));
-  console.log("🔒 Non-finishers:", nonFinisher.map(t => t.name));
-  console.log("⚠️ Verification failures:", verificationFailure);
-  console.log("⚠️ Function failures:", functionFailure);
+  // console.log("✅ Verified:", verified.map(t => t.name));
+  // console.log("❌ Non-verified:", nonVerified.map(t => t.name));
+  // console.log("🔒 Non-finishers:", nonFinisher.map(t => t.name));
+  // console.log("⚠️ Verification failures:", verificationFailure);
+  // console.log("⚠️ Function failures:", functionFailure);
 
   return { verified, nonVerified, nonFinisher, verificationFailure, functionFailure };
 }

@@ -6,21 +6,19 @@
     "documentVersion": "1.0"
   },
   "aboutCampaign": {
-    "moduleTitle": "Pre-Assessment: BPMN Knowledge Check",
-    "moduleDescription": "Test your baseline understanding of BPMN concepts before starting the learning scenarios",
+    "moduleTitle": "Post-Assessment: BPMN Knowledge Validation",
+    "moduleDescription": "Demonstrate what you've learned about BPMN concepts through the learning scenarios",
     "numberOfScenarios": 7,
-    "endScreenText": "Pre-assessment complete! Ready to begin learning?",
-    "nextCampaign": "scenarioData/scenario2.json",
+    "endScreenText": "Post-assessment complete! Thank you for participating",
     "hiddenResults": true
   },
   "scenarios": [
     {
       "scenarioId": "scenario_1",
       "scenarioTitle": "Question 1 of 7",
-      "scenarioDescription": "What does a Start Event represent in BPMN?",
+      "scenarioDescription": "Which element evaluates conditions to choose a path?",
       "resetCanvas": true,
       "endEventChecks": [],
-      "tutorialImage": "img/tutorial/CreateConnection.gif",
       "tokens": [
         {
           "tokenId": "token_1",
@@ -41,9 +39,16 @@
         },
         {
           "type": "activity",
-          "name": "Where the process begins",
+          "name": "Event",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
+          "functions": []
+        },
+        {
+          "type": "activity",
+          "name": "Gateway",
+          "nodeId": "node_3",
+          "coordinates": {"x": 540, "y": 272},
           "functions": [
             {
               "name": "CorrectAnswer",
@@ -53,14 +58,7 @@
         },
         {
           "type": "activity",
-          "name": "A decision point",
-          "nodeId": "node_3",
-          "coordinates": {"x": 540, "y": 272},
-          "functions": []
-        },
-        {
-          "type": "activity",
-          "name": "Something optional",
+          "name": "Activity",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []
@@ -89,8 +87,7 @@
     {
       "scenarioId": "scenario_2",
       "scenarioTitle": "Question 2 of 7",
-      "scenarioDescription": "Which element represents work or tasks?",
-      "tutorialImage": "img/tutorial/DeleteConnected.gif",
+      "scenarioDescription": "An AND split means:",
       "resetCanvas": true,
       "tokens": [
         {
@@ -112,9 +109,16 @@
         },
         {
           "type": "activity",
-          "name": "Activity",
+          "name": "Only one path is taken",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
+          "functions": []
+        },
+        {
+          "type": "activity",
+          "name": "Multiple tokens go out",
+          "nodeId": "node_3",
+          "coordinates": {"x": 540, "y": 272},
           "functions": [
             {
               "name": "CorrectAnswer",
@@ -124,14 +128,7 @@
         },
         {
           "type": "activity",
-          "name": "Gateway",
-          "nodeId": "node_3",
-          "coordinates": {"x": 540, "y": 272},
-          "functions": []
-        },
-        {
-          "type": "activity",
-          "name": "Event",
+          "name": "No path is taken",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []
@@ -160,7 +157,7 @@
     {
       "scenarioId": "scenario_3",
       "scenarioTitle": "Question 3 of 7",
-      "scenarioDescription": "What does an XOR gateway do?",
+      "scenarioDescription": "An XOR gateway allows:",
       "resetCanvas": true,
       "tokens": [
         {
@@ -182,16 +179,9 @@
         },
         {
           "type": "activity",
-          "name": "Splits into all paths",
+          "name": "Exactly one outgoing path",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
-          "functions": []
-        },
-        {
-          "type": "activity",
-          "name": "Chooses one path",
-          "nodeId": "node_3",
-          "coordinates": {"x": 540, "y": 272},
           "functions": [
             {
               "name": "CorrectAnswer",
@@ -201,7 +191,14 @@
         },
         {
           "type": "activity",
-          "name": "Loops back",
+          "name": "All paths",
+          "nodeId": "node_3",
+          "coordinates": {"x": 540, "y": 272},
+          "functions": []
+        },
+        {
+          "type": "activity",
+          "name": "None",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []
@@ -230,7 +227,7 @@
     {
       "scenarioId": "scenario_4",
       "scenarioTitle": "Question 4 of 7",
-      "scenarioDescription": "What does an AND gateway do?",
+      "scenarioDescription": "What do activities do?",
       "resetCanvas": true,
       "tokens": [
         {
@@ -252,9 +249,16 @@
         },
         {
           "type": "activity",
-          "name": "Activates all outgoing paths",
+          "name": "Make decisions",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
+          "functions": []
+        },
+        {
+          "type": "activity",
+          "name": "Perform work",
+          "nodeId": "node_3",
+          "coordinates": {"x": 540, "y": 272},
           "functions": [
             {
               "name": "CorrectAnswer",
@@ -264,14 +268,7 @@
         },
         {
           "type": "activity",
-          "name": "Activates none",
-          "nodeId": "node_3",
-          "coordinates": {"x": 540, "y": 272},
-          "functions": []
-        },
-        {
-          "type": "activity",
-          "name": "Activates one path",
+          "name": "End process",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []
@@ -300,9 +297,8 @@
     {
       "scenarioId": "scenario_5",
       "scenarioTitle": "Question 5 of 7",
-      "scenarioDescription": "What does an Inclusive (OR) gateway do?",
+      "scenarioDescription": "What are Sequence Flows used for?",
       "resetCanvas": true,
-      "tutorialImage": "img/tutorial/CreateConnection.gif",
       "tokens": [
         {
           "tokenId": "token_1",
@@ -323,16 +319,9 @@
         },
         {
           "type": "activity",
-          "name": "Activates all paths always",
+          "name": "To show order of execution",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
-          "functions": []
-        },
-        {
-          "type": "activity",
-          "name": "Activates one or more depending on conditions",
-          "nodeId": "node_3",
-          "coordinates": {"x": 540, "y": 272},
           "functions": [
             {
               "name": "CorrectAnswer",
@@ -342,7 +331,14 @@
         },
         {
           "type": "activity",
-          "name": "It stops the flow",
+          "name": "To show ownership",
+          "nodeId": "node_3",
+          "coordinates": {"x": 540, "y": 272},
+          "functions": []
+        },
+        {
+          "type": "activity",
+          "name": "To decorate diagrams",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []
@@ -371,7 +367,7 @@
     {
       "scenarioId": "scenario_6",
       "scenarioTitle": "Question 6 of 7",
-      "scenarioDescription": "Sequence Flows connect:",
+      "scenarioDescription": "What does an End Event indicate?",
       "resetCanvas": true,
       "tokens": [
         {
@@ -393,21 +389,21 @@
         },
         {
           "type": "activity",
-          "name": "Pools",
+          "name": "A timer",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
           "functions": []
         },
         {
           "type": "activity",
-          "name": "Lanes",
+          "name": "A failed process",
           "nodeId": "node_3",
           "coordinates": {"x": 540, "y": 272},
           "functions": []
         },
         {
           "type": "activity",
-          "name": "Flow objects like tasks and gateways",
+          "name": "A completed path",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": [
@@ -441,7 +437,7 @@
     {
       "scenarioId": "scenario_7",
       "scenarioTitle": "Question 7 of 7",
-      "scenarioDescription": "End Events represent:",
+      "scenarioDescription": "Inclusive OR gateways:",
       "resetCanvas": true,
       "tokens": [
         {
@@ -463,14 +459,14 @@
         },
         {
           "type": "activity",
-          "name": "A condition",
+          "name": "Always split into all paths",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
           "functions": []
         },
         {
           "type": "activity",
-          "name": "Where the process finishes",
+          "name": "Split into one or more paths depending on conditions",
           "nodeId": "node_3",
           "coordinates": {"x": 540, "y": 272},
           "functions": [
@@ -482,7 +478,7 @@
         },
         {
           "type": "activity",
-          "name": "A loop",
+          "name": "Are only used in loops",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []

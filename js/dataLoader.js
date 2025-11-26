@@ -1,5 +1,6 @@
 
-// Loads in JSON file
+// Is called by initCanvas() in controller
+// Loads a JSON document based on passed filepath
 async function loadScenarioJSON(filepath) {
     try {
         console.log('Fetching file:', filepath);
@@ -12,7 +13,6 @@ async function loadScenarioJSON(filepath) {
         const jsonData = await response.json();
 
         console.log('JSON parsed successfully!');
-        // Future 1: Add verificaiton
         return jsonData
 
     } catch(error) {
