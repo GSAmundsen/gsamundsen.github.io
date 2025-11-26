@@ -9,6 +9,59 @@
     <hr style="width: 50%;margin-left: 0;">
     <div style="margin-left: 1%; width: 80%; margin-top: 2%;">
         <div>
+            <h2>BPMN Elements</h2>
+        </div>
+        <div>
+            <img src="./img/help/Start.png" height="50px">
+            <p>Start Event is where the process starts</p>
+        </div>
+            <hr style="width: 50%;margin-left: 0;">
+        
+        <div>
+            <img src="./img/help/IntermediateEvent.png" height="50px">
+            <p>An Intermediary Event is an event that occurs between Start and End events</p>
+        </div>
+        <hr style="width: 50%;margin-left: 0;">
+
+        <div>
+            <img src="./img/help/EndState.png" height="50px">
+            <p>The End Event is where the entire process ends</p>
+        </div>
+            <hr style="width: 50%;margin-left: 0;">
+
+        <div>
+            <img src="./img/help/ExclusiveOR.png" height="50px">
+            <p>Exclusive OR Gateway evaluates state of an incomming token, and breaks the flow into one (or more) mutually exclusive paths</p>
+        </div>
+            <hr style="width: 50%;margin-left: 0;">
+        
+        <div>
+            <img src="./img/help/ParalellGateway.png" height="50px">
+            <p>Paralell Gateways break the flow into two concurrent tasks</p>
+        </div>
+            <hr style="width: 50%;margin-left: 0;">
+        <div>
+            <img src="./img/help/InclusiveOR.png" height="50px">
+            <p>Inclusive OR Gateways break the flow into one or more flows</p>
+        </div>
+            <hr style="width: 50%;margin-left: 0;">
+        <div>
+            <img src="./img/help/activity.png" height="75px">
+            <p>Task/Activity is a single, atomic unit of work to be performed</p>
+        </div>
+            <hr style="width: 50%;margin-left: 0;">
+        <div>
+            <img src="./img/help/poolLane.png" height="150px">
+            <p>Pools (Airport in this case) represent the whole process or system </p>
+            <p>Lanes represent a functional unit (such as Check-in, Security, etc) and contain logical groupings of tasks/gateways (flow objects)</p>
+        </div>
+            <hr style="width: 50%;margin-left: 0;">
+
+        <div>
+            <h2 style="margin-top: 2%;">Game Mechanics</h2>
+        </div>
+            <hr style="width: 50%;margin-left: 0;">
+        <div>
             <p><button>✅ Verify Solution</button> - System attempts to verify the solution. Hints for tokens that did not make it from start to finish appear at the top of the diagram</p>
             <p><button>➡️ Next Scenario</button> - Move on to the next scenario</p>
             <p><button>🗑️ Reset All</button> - Remove all connections between nodes</p>
