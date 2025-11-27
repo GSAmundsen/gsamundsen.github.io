@@ -20,7 +20,7 @@
       "scenarioDescription": "How does a Start Event look like?",
       "resetCanvas": true,
       "endEventChecks": [],
-      "tutorialImage": "img/tutorial/CreateConnection.gif",
+      "tutorialImage": "img/tutorial/T1-1.jpg",
       "tokens": [
         {
           "tokenId": "token_1",
@@ -90,7 +90,7 @@
       "scenarioId": "scenario_2",
       "scenarioTitle": "Question 2 of 7",
       "scenarioDescription": "Which element represents work or tasks?",
-      "tutorialImage": "img/tutorial/DeleteConnected.gif",
+      "tutorialImage": "img/tutorial/T1-2.jpg",
       "resetCanvas": true,
       "tokens": [
         {
@@ -162,6 +162,7 @@
       "scenarioTitle": "Question 3 of 7",
       "scenarioDescription": "What does an XOR gateway do?",
       "resetCanvas": true,
+      "tutorialImage": "img/tutorial/T1-3.jpg",
       "tokens": [
         {
           "tokenId": "token_1",
@@ -232,6 +233,7 @@
       "scenarioTitle": "Question 4 of 7",
       "scenarioDescription": "What does an AND gateway do?",
       "resetCanvas": true,
+      "tutorialImage": "img/tutorial/T1-4.jpg",
       "tokens": [
         {
           "tokenId": "token_1",
@@ -302,7 +304,6 @@
       "scenarioTitle": "Question 5 of 7",
       "scenarioDescription": "What does an Inclusive (OR) gateway do?",
       "resetCanvas": true,
-      "tutorialImage": "img/tutorial/CreateConnection.gif",
       "tokens": [
         {
           "tokenId": "token_1",
