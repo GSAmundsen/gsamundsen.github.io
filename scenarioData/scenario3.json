@@ -116,7 +116,7 @@
         },
         {
           "type": "activity",
-          "name": "Multiple tokens go out",
+          "name": "Multiple paths are taken",
           "nodeId": "node_3",
           "coordinates": {"x": 540, "y": 272},
           "functions": [
@@ -191,14 +191,14 @@
         },
         {
           "type": "activity",
-          "name": "All paths",
+          "name": "One or more outgoing paths",
           "nodeId": "node_3",
           "coordinates": {"x": 540, "y": 272},
           "functions": []
         },
         {
           "type": "activity",
-          "name": "None",
+          "name": "Many outgoing paths",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []
@@ -338,7 +338,7 @@
         },
         {
           "type": "activity",
-          "name": "To decorate diagrams",
+          "name": "To connect information",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []

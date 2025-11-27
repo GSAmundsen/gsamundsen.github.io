@@ -1,5 +1,85 @@
 
-// Is called by learningSystem.js - verifySolution()
+// Is called by button "Verify" and controller.js - nextScenario()
+// Calls the verifier and updates player session storage and id="taskVerificationText"
+function verifySolution() {
+  const results = verifier();
+
+  const totalTokens = model.currentScenario.tokens.length;
+  const allCorrect =
+    results.verified.length === totalTokens &&
+    results.nonVerified.length === 0 &&
+    results.nonFinisher.length === 0;
+
+
+  const currentCampaign = player.results.find(r => r.moduleTitle === model.game.moduleTitle);
+  const scenarioId = model.loadedScenarioData.scenarios[model.game.currentScenario].scenarioId;
+  if (currentCampaign) {
+    currentCampaign.scenarios[scenarioId] = allCorrect ? 1 : 0;
+  }
+
+  if (allCorrect){
+    displaySuccess();
+  } else {
+    displayVerificationResults(results);
+  }
+}
+
+
+// Is called by verifySolution()
+// Updates id="taskVerificationText" with success message
+function displaySuccess() {
+  const html = "<span style='color: green;'>✓ All tokens passed!</span>";
+  document.getElementById("taskVerificationText").innerHTML = html;
+}
+
+
+// Is called by verifySolution()
+// Updates id="taskVerificationText" with 3 hints for the player
+function displayVerificationResults(results) {
+  let html = "";
+
+  let messageCount = 0;
+  const MAX_MESSAGES = 3;
+
+  // Shows max 1 non-finisher
+  if (results.nonFinisher.length > 0) {
+    const defaultMsg = model.currentScenario.nonFinisherDescription || "didn't make it to the end.";
+    const token = results.nonFinisher[0]; // ← Just get first one
+    html += `<span style='color: red;'>${token.name} ${defaultMsg}</span><br>`;
+    messageCount++;
+  }
+
+  // Shows up to 3 tokens that failed verification
+  if (messageCount < MAX_MESSAGES) {
+    for (const failure of results.verificationFailure) {
+      if (messageCount >= MAX_MESSAGES) break;
+
+      const variableMatch = failure.match(/token\.(\w+)/);
+      const tokenName = failure.split(" ")[0];
+
+      if (variableMatch) {
+        const variable = variableMatch[1];
+        const descList = model.currentScenario.failureDescriptions?.[variable];
+
+        if (descList?.length > 0) {
+          const msg = descList[Math.floor(Math.random() * descList.length)];
+          html += `<span style='color: red;'>${tokenName} ${msg}<br>`;
+        } else {
+          html += `<span style='color: red;'>${tokenName} failed check at End Event.<br>`;
+        }
+      } else {
+        html += failure + "<br>";
+      }
+      
+      messageCount++;
+    }
+  }
+
+  document.getElementById("taskVerificationText").innerHTML = html;
+}
+
+
+// Is called by verifySolution()
 // Takes the tokens through the model created by the user
 // Checks if (1) alle the nodes make it through and (2) if they are in the right state once they finish
 function verifier() {
@@ -137,24 +217,26 @@ function verifier() {
     }
   }
 
-  // console.log("✅ Verified:", verified.map(t => t.name));
-  // console.log("❌ Non-verified:", nonVerified.map(t => t.name));
-  // console.log("🔒 Non-finishers:", nonFinisher.map(t => t.name));
-  // console.log("⚠️ Verification failures:", verificationFailure);
-  // console.log("⚠️ Function failures:", functionFailure);
+  console.log("✅ Verified:", verified.map(t => t.name));
+  console.log("❌ Non-verified:", nonVerified.map(t => t.name));
+  console.log("🔒 Non-finishers:", nonFinisher.map(t => t.name));
+  console.log("⚠️ Verification failures:", verificationFailure);
+  console.log("⚠️ Function failures:", functionFailure);
 
   return { verified, nonVerified, nonFinisher, verificationFailure, functionFailure };
 }
 
+
+// Is called by verifier()
+// Merges seperate threads
 function addOrMergeThread(threadMap, nodeId, visitedSet) {
   if (threadMap.has(nodeId)) {
-    // Thread already waiting at this node - merge histories
     const existing = threadMap.get(nodeId);
     visitedSet.forEach(v => existing.visited.add(v));
   } else {
-    // First thread to arrive at this node
     threadMap.set(nodeId, {visited: new Set(visitedSet)});
   }
 }
+
 
 window.verifier = verifier;

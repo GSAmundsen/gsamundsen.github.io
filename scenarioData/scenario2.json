@@ -17,6 +17,7 @@
       "scenarioId": "scenario_1",
       "scenarioTitle": "Level 1: Check-in Area",
       "scenarioDescription": "Set up the check-in area for passenger processing and luggage handling",
+      "nonFinisherDescription": "didn't make it to security.",
       "failureDescriptions":{
         "CheckIn":[
           "forgot to check-in.",
@@ -163,6 +164,7 @@
       "scenarioId": "scenario_2",
       "scenarioTitle": "Level 2: Security Check",
       "scenarioDescription": "Add security screening with boarding card and luggage scanning",
+      "nonFinisherDescription": "didn't make it past security.",
       "failureDescriptions":{
         "CarryOnScan": [
           "had carry-on items that weren't scanned.",
@@ -350,6 +352,7 @@
       "scenarioId": "scenario_3",
       "scenarioTitle": "Level 3: Waiting Area",
       "scenarioDescription": "Set up the waiting area with amenities for passenger comfort",
+      "nonFinisherDescription": "didn't make it to the plane.",
       "failureDescriptions":{
         "WantsShopping": [
           "is still browsing the shops.",
@@ -885,6 +888,7 @@
       "scenarioId": "scenario_4",
       "scenarioTitle": "Level 4: Advanced Airport Operations",
       "scenarioDescription": "Expand the model with safety, commercial, and procedural elements",
+      "nonFinisherDescription": "didn't make it to the plane.",
       "failureDescriptions":{
        "Passport": [
           "arrived without a passport.",
@@ -1863,6 +1867,7 @@
       "scenarioId": "scenario_5",
       "scenarioTitle": "Level 5: Sandbox Mode",
       "scenarioDescription": "Build the complete airport model from scratch using all available elements",
+      "nonFinisherDescription": "didn't make it to the plane.",
       "resetCanvas": true,
       "failureDescriptions": {
         "CheckIn": [

@@ -79,6 +79,7 @@ let model = {
     // Used by controller.js - multiple functions
     // Stores element information for the current scenario
     currentScenario: {
+        nonFinisherDescription: null,
         tokens: [],
         pools: [],
         lanes: [],

@@ -1,18 +1,18 @@
 
-// LEARNING SYSTEM (BKT + PRE/POST QUIZ TRACKING)
-
-
-// Player session data
+// Used by verifier.js - verifysolution() and controller.js - startGame(), loadGameData()
+// Stores player session data
 let player = {
   id: "",
-  knowledge: 0.0,
-  preQuizScore: null,
-  postQuizScore: null
+  totalKnowledgeScore: 0.0,
+  currentCampaignKnowledgeScore: 0.0,
+  results: [],
 };
 
 
-// BAYESIAN KNOWLEDGE TRACING
 
+// Bayesian knowledge tracing class
+// Tracks progression of how users knowledge is going
+// Instances are created here and in controller.js - startGame() and nextCampaign()
 class BKT {
   constructor(start = 0.3, learn = 0.2) {
     this.P = start;
@@ -27,206 +27,47 @@ class BKT {
     return this.P;
   }
 }
-
-let learner = new BKT();
-
-
+let totalLearnerScore = new BKT();
+let campaignLearner; 
 
 
-// UPDATE KNOWLEDGE AFTER VERIFY
+// Is called by controller.js - nextScenario()
+// Updates knowledges scores and then formats data to be sent to google endpoint
+function computeKnowledgeScore() {
 
-function updateLearning(isCorrect) {
-
-  if (typeof learner !== "undefined") {
-    player.knowledge = learner.update(isCorrect);
-  }
+  const currentCampaign = player.results.find(r => r.moduleTitle === model.game.moduleTitle);
+  const scenarioId = model.loadedScenarioData.scenarios[model.game.currentScenario].scenarioId;
+  const result = currentCampaign.scenarios[scenarioId];
+  player.currentCampaignKnowledgeScore = campaignLearner.update(result === 1);
+  player.totalKnowledgeScore = totalLearnerScore.update(result === 1);
 
   const data = {
-    type: "SCENARIO",
+    timestamp: new Date().toLocaleString(),
     id: player.id,
-    scenario: model.game.currentScenario + 1,
-    result: isCorrect ? 1 : 0,
-    knowledge: player.knowledge,
-    preQuizScore: player.preQuizScore,
-    postQuizScore: player.postQuizScore,
-    timestamp: new Date().toLocaleString()
+    moduleTitle: model.game.moduleTitle,
+    scenarioId: scenarioId,
+    result: result,
+    totalKnowledgeScore: player.totalKnowledgeScore,
+    currentCampaignKnowledgeScore: player.currentCampaignKnowledgeScore
   };
-
-  localStorage.setItem(
-    `learning_${player.id}_scenario${data.scenario}`,
-    JSON.stringify(data)
-  );
-
   sendToGoogleSheet(data);
 }
 
 
-
-
-// PRE QUIZ SCORE
-
-function storePreQuizScore(score, total) {
-  const startLevel = score / total;   // 0–1
-
-  // Save player starting knowledge
-  player.preQuizScore = startLevel;
-  player.knowledge = startLevel;
-
-  // Reset BKT model starting at pre-quiz level
-  learner = new BKT(startLevel);
-
-  // Save to localStorage
-  localStorage.setItem(`preQuiz_${player.id}`, player.preQuizScore);
-
-  // Send clean row to sheet
-  const data = {
-    type: "PRE_QUIZ",
-    id: player.id,
-    scenario: "",
-    result: "",
-    knowledge: startLevel,
-    preQuizScore: startLevel,
-    postQuizScore: "",
-    timestamp: new Date().toLocaleString()
-  };
-
-  sendToGoogleSheet(data);
-
-  console.log("Pre-quiz starting knowledge set:", startLevel);
-}
-
-
-
-
-
-
-// POST QUIZ SCORE
-
-function storePostQuizScore(score, total) {
-  const value = score / total;
-
-  player.postQuizScore = value;
-
-  localStorage.setItem(`postQuiz_${player.id}`, value);
-
-  const data = {
-    type: "POST_QUIZ",
-    id: player.id,
-    scenario: "",
-    result: "",
-    knowledge: "",
-    preQuizScore: player.preQuizScore,
-    postQuizScore: value,
-    timestamp: new Date().toLocaleString()
-  };
-
-  sendToGoogleSheet(data);
-}
-
-
-// SEND TO GOOGLE SHEETS
-
+// Is called by computeKnowledgeScore()
+// Sends results to google sheets
 function sendToGoogleSheet(payload) {
+
+  // Change endpoint if needed
   const scriptURL =
     "https://script.google.com/macros/s/AKfycbzJOxQwZ4QgWNTBxPAw_x-_1Vc9k-yG-Mqzz62SWjGnRyjpSeSTpdBxE8_JjtmmYqlN/exec";
 
-  // fetch(scriptURL, {
-  //   method: "POST",
-  //   mode: "no-cors",
-  //   headers: { "Content-Type": "application/json" },
-  //   body: JSON.stringify(payload)
-  // })
-  //   .then(() => console.log("Sent to Google Sheet:", payload))
-  //   .catch(err => console.error("Sheet send error:", err));
+  fetch(scriptURL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(() => console.log("Sent to Google Sheet:", payload))
+    .catch(err => console.error("Sheet send error:", err));
 }
-
-
-
-
-// VERIFY SOLUTION WRAPPER
-
-// const _oldVerifySolution = verifySolution;
-
-function verifySolution() {
-  const results = verifier();
-
-  const totalTokens = model.currentScenario.tokens.length;
-
-  const allCorrect =
-    results.verified.length === totalTokens &&
-    results.nonVerified.length === 0 &&
-    results.nonFinisher.length === 0;
-
-  // Update learning level (BKT model)
-  updateLearning(allCorrect);
-
-  // Show the messages under the canvas
-  displayVerificationResults(results);
-}
-
-
-
-
-
-// DISPLAY FAILURE MESSAGES
-
-function displayVerificationResults(results) {
-  let html = "";
-
-  // If absolutely everything passed
-  if (
-    results.verified.length > 0 &&
-    results.verified.length === model.currentScenario.tokens.length
-  ) {
-    html = `<span style='color: green;'>✓ All tokens passed!</span>`;
-  }
-
-  // Otherwise show failures (max 3 total)
-  else {
-    let messageCount = 0;
-    const MAX_MESSAGES = 3;
-
-    // PRIORITY 1: NON-FINISHERS
-    if (results.nonFinisher.length > 0) {
-      const messages = [
-        "didn't make it to the plane."
-      ];
-      
-      for (const token of results.nonFinisher) {
-        if (messageCount >= MAX_MESSAGES) break;
-        
-        const msg = messages[Math.floor(Math.random() * messages.length)];
-        html += `<span style='color: orange;'>${token.name} ${msg}</span><br>`;
-        messageCount++;
-      }
-    }
-
-    if (messageCount < MAX_MESSAGES) {
-      for (const failure of results.verificationFailure) {
-        if (messageCount >= MAX_MESSAGES) break;
-
-        const variableMatch = failure.match(/token\.(\w+)/);
-        const tokenName = failure.split(" ")[0];
-
-        if (variableMatch) {
-          const variable = variableMatch[1];
-          const descList = model.currentScenario.failureDescriptions?.[variable];
-
-          if (descList?.length > 0) {
-            const msg = descList[Math.floor(Math.random() * descList.length)];
-            html += `${tokenName} ${msg}<br>`;
-          } else {
-            html += `${tokenName} failed<br>`;
-          }
-        } else {
-          html += failure + "<br>";
-        }
-        
-        messageCount++;
-      }
-    }
-  }
-
-  document.getElementById("taskVerificationText").innerHTML = html;
-}
-

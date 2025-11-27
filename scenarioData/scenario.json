@@ -17,7 +17,7 @@
     {
       "scenarioId": "scenario_1",
       "scenarioTitle": "Question 1 of 7",
-      "scenarioDescription": "What does a Start Event represent in BPMN?",
+      "scenarioDescription": "How does a Start Event look like?",
       "resetCanvas": true,
       "endEventChecks": [],
       "tutorialImage": "img/tutorial/CreateConnection.gif",
@@ -41,7 +41,7 @@
         },
         {
           "type": "activity",
-          "name": "Where the process begins",
+          "name": "A circle",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
           "functions": [
@@ -53,14 +53,14 @@
         },
         {
           "type": "activity",
-          "name": "A decision point",
+          "name": "A triangle",
           "nodeId": "node_3",
           "coordinates": {"x": 540, "y": 272},
           "functions": []
         },
         {
           "type": "activity",
-          "name": "Something optional",
+          "name": "A square",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []
@@ -371,7 +371,7 @@
     {
       "scenarioId": "scenario_6",
       "scenarioTitle": "Question 6 of 7",
-      "scenarioDescription": "Sequence Flows connect:",
+      "scenarioDescription": "How does a Sequence Flow look like?",
       "resetCanvas": true,
       "tokens": [
         {
@@ -393,21 +393,21 @@
         },
         {
           "type": "activity",
-          "name": "Pools",
+          "name": "A triangle",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
           "functions": []
         },
         {
           "type": "activity",
-          "name": "Lanes",
+          "name": "A Circle",
           "nodeId": "node_3",
           "coordinates": {"x": 540, "y": 272},
           "functions": []
         },
         {
           "type": "activity",
-          "name": "Flow objects like tasks and gateways",
+          "name": "An arrow",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": [
@@ -441,7 +441,7 @@
     {
       "scenarioId": "scenario_7",
       "scenarioTitle": "Question 7 of 7",
-      "scenarioDescription": "End Events represent:",
+      "scenarioDescription": "Which kind of Event does the circle the a thick black border represent?",
       "resetCanvas": true,
       "tokens": [
         {
@@ -463,14 +463,14 @@
         },
         {
           "type": "activity",
-          "name": "A condition",
+          "name": "startEvent",
           "nodeId": "node_2",
           "coordinates": {"x": 540, "y": 96},
           "functions": []
         },
         {
           "type": "activity",
-          "name": "Where the process finishes",
+          "name": "endEvent",
           "nodeId": "node_3",
           "coordinates": {"x": 540, "y": 272},
           "functions": [
@@ -482,7 +482,7 @@
         },
         {
           "type": "activity",
-          "name": "A loop",
+          "name": "intermediateEvent",
           "nodeId": "node_4",
           "coordinates": {"x": 540, "y": 448},
           "functions": []

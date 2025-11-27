@@ -5,7 +5,6 @@ let context = null;
 // Is called from index.html once the user has filled out ID information
 // Initialises the transition from Start Screen to Game Area
 function startGame() {
-  console.log("test")
 
   // Player information is retrieved and checked
   // Then PlayerId is created and stored
@@ -25,6 +24,7 @@ function startGame() {
   document.getElementById("loginSection").style.display = "none";
   document.getElementById("app").style.display = "block";
   updateGameArea();
+  campaignLearner = new BKT();
   initCanvas();
 }
 
@@ -41,6 +41,14 @@ function nextCampaign(){
     nodes: [],
     connectors: []
   };
+
+  // Stores KnowledgeScore for the finished campaign and resets it for the new one
+  const currentCampaign = player.results.find(r => r.moduleTitle === model.game.moduleTitle);
+  if (currentCampaign) {
+    currentCampaign.finishedCampaignKnowledgeScore = player.currentCampaignKnowledgeScore;
+  }
+  campaignLearner = new BKT();
+  player.currentCampaignKnowledgeScore = 0.0;
 
   // Sets up game area
   document.getElementById("end").style.display = "none";
@@ -61,7 +69,6 @@ async function initCanvas()
   context.canvas.height = model.canvasProperties.height + 100;
   context.fillStyle = model.canvasProperties.backgroundColor;
   context.fillRect(0, 0, model.canvasProperties.width, model.canvasProperties.height);
-  console.log("Testtttt");
 
   // Adds mouse and key listeners for learner interaction
   canvas.addEventListener('mousedown', mouseDown);
@@ -92,6 +99,15 @@ function loadGameData(){
   document.getElementById('moduleTitleHeader').innerText = model.game.moduleTitle;
   document.getElementById('moduleTextHeader').innerText = model.game.moduleDescription;
 
+  // Prepares storage for campaing results
+  if (!player.results.find(r => r.moduleTitle === model.game.moduleTitle)) {
+    player.results.push({
+      moduleTitle: model.game.moduleTitle,
+      scenarios: {},
+      finishedCampaignKnowledgeScore: null
+    });
+  }
+
   // Hide/show verification UI based on campaign setting
   const verifyBtn = document.getElementById("verifyBtn");
   const feedbackText = document.getElementById("taskVerificationText");
@@ -118,7 +134,8 @@ function loadScenarioInformation(){
 // Is called by initCanvas() and nextScenario()
 // Loads information from loadedScenarioData into model.currentScenario and sets coordinates/sizes of elements
 function loadScenarioData(){
-  const scenario = model.loadedScenarioData.scenarios[model.game.currentScenario]
+  const scenario = model.loadedScenarioData.scenarios[model.game.currentScenario];
+  model.currentScenario.nonFinisherDescription = scenario.nonFinisherDescription || null;
   model.currentScenario.pools = loadStaticElements(scenario.static?.pools || []);
   model.currentScenario.lanes = loadStaticElements(scenario.static?.lanes || []);
   model.currentScenario.tokens = scenario.tokens;
@@ -269,6 +286,7 @@ function draw() {
   drawTemporaryArrow();
 }
 
+
 // Is called by initCanvas() and nextScenario()
 // For scenarios that have tutorialImage it shows it and sets up a button for retrieval
 function tutorialImage() {
@@ -284,6 +302,7 @@ function tutorialImage() {
   }
 }
 
+
 // Is called by tutorialImage()
 // Shows the tutorial image and sets up so it can be clsoed again
 function showTutorialOverlay(imagePath) {
@@ -298,11 +317,14 @@ function showTutorialOverlay(imagePath) {
   };
 }
 
+
 // Is called by clickign Next Scenario button
+// Checks solution, updates and uploads knowledgeScore
 // Starts transition to either next scenario or End Screen
 function nextScenario() {
   verifySolution();
   document.getElementById("taskVerificationText").innerText = "Task results will appear here.";
+  computeKnowledgeScore();
   if (model.game.currentScenario < model.game.numberOfScenarios - 1) {
     model.game.currentScenario += 1;
     loadScenarioInformation();
