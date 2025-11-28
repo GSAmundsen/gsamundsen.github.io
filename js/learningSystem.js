@@ -58,10 +58,13 @@ function computeKnowledgeScore() {
 // Sends results to google sheets
 function sendToGoogleSheet(payload) {
 
-  // Change endpoint if needed
-  const scriptURL =
-    "https://script.google.com/macros/s/AKfycbzJOxQwZ4QgWNTBxPAw_x-_1Vc9k-yG-Mqzz62SWjGnRyjpSeSTpdBxE8_JjtmmYqlN/exec";
+  // Add upload endpoint
+  const scriptURL = null;
 
+  if (!scriptURL) {
+    console.log("No upload endpoint configured. Data not sent:", payload);
+    return;
+  }
   fetch(scriptURL, {
     method: "POST",
     mode: "no-cors",

@@ -3,7 +3,7 @@
 // Loads a JSON document based on passed filepath
 async function loadScenarioJSON(filepath) {
     try {
-        console.log('Fetching file:', filepath);
+        // console.log('Fetching file:', filepath);
         const response = await fetch(filepath);
 
         if (!response.ok) {
@@ -12,7 +12,7 @@ async function loadScenarioJSON(filepath) {
 
         const jsonData = await response.json();
 
-        console.log('JSON parsed successfully!');
+        // console.log('JSON parsed successfully!');
         return jsonData
 
     } catch(error) {

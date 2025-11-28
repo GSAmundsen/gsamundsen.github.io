@@ -6,8 +6,9 @@ To run the program:
 - If you want to make a custom scenario or node-based quiz you can put your own file in the scenarioData folder.
     By default the system reads 'scenario.json' and from there it is possible to chain campaigns using "nextCampaign".
     The constraints of what is supported is detailed in the JSON standard below.
-- We've mostly run it on windows and in testing some mac users had problems interacting with canvas.
+- We've mostly run it on windows desktop and in testing some mac users had problems interacting with canvas.
     Full functionality is dependent on a "delete" button and having both a right and left mouse button available.
+    Has not been tested on mobile devieces at all.
 
 To modify the program:
 - index.html is the main HTML file and initiator
