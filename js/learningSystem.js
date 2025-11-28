@@ -144,7 +144,7 @@ function updateLearningDisplay() {
 
 function sendToGoogleSheet(payload) {
   const scriptURL =
-    "https://script.google.com/macros/s/AKfycbzJOxQwZ4QgWNTBxPAw_x-_1Vc9k-yG-Mqzz62SWjGnRyjpSeSTpdBxE8_JjtmmYqlN/exec";
+    "https://script.google.com/macros/s/AKfycbw_MyR4TT6ARiz3sweCwtJ-dNG-FnZHIlJx4_Op96dgKcInLmRSd4Vy4DP5OsWCHEk8/exec";
 
   fetch(scriptURL, {
     method: "POST",
