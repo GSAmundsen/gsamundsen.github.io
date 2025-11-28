@@ -17,9 +17,9 @@ To modify the program:
 - learningSystem.js is used for keeping player information and learning analytics. This is also where data is exported.
 - userInput.js is where user interaction is defined.
 - verfier.js is used for model verification using predefined tokens and user genreated model.
-- view.js is sued for setting up html code in index.html
+- view.js is used for setting up html code in index.html
 - img\tutorial folder is where you can put tutorial images
-- scenarioData folder is where you put your jsnon scenarios
+- scenarioData folder is where you put your json scenarios
 
 
 
@@ -36,7 +36,7 @@ To modify the program:
 Functions use JavaScript code strings. Here are the currently supported patterns:
 - Activites: set a boolean value on a token variable
 - Gateways: checks the boolean value of a token variable for the purpose of output path
-- EndEvents: checks the boolean value of a token variable for to verify if its gone correctly through
+- EndEvent: checks the boolean value of a token variable to verify if its set correctly 
 
 ## Supported BPMN elements
 To add element logic you need to add drawing logic in drawFunctions and handling logic in verifier.
@@ -51,7 +51,6 @@ Elements currently supported:
 ## Structure
 - `schemaVersion` (string, required): Schema version number
   - Example: `"1.0"`
-  - Used for compatibility checking
 
 
 - `metadata` (object, required): Information about the file creator
