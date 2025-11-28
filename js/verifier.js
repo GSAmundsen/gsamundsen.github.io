@@ -217,11 +217,12 @@ function verifier() {
     }
   }
 
-  console.log("✅ Verified:", verified.map(t => t.name));
-  console.log("❌ Non-verified:", nonVerified.map(t => t.name));
-  console.log("🔒 Non-finishers:", nonFinisher.map(t => t.name));
-  console.log("⚠️ Verification failures:", verificationFailure);
-  console.log("⚠️ Function failures:", functionFailure);
+  // For problemshooting the verifier
+  // console.log("✅ Verified:", verified.map(t => t.name));
+  // console.log("❌ Non-verified:", nonVerified.map(t => t.name));
+  // console.log("🔒 Non-finishers:", nonFinisher.map(t => t.name));
+  // console.log("⚠️ Verification failures:", verificationFailure);
+  // console.log("⚠️ Function failures:", functionFailure);
 
   return { verified, nonVerified, nonFinisher, verificationFailure, functionFailure };
 }

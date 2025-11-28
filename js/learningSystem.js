@@ -68,6 +68,6 @@ function sendToGoogleSheet(payload) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   })
-    .then(() => console.log("Sent to Google Sheet:", payload))
+    //.then(() => console.log("Sent to Google Sheet:", payload))
     .catch(err => console.error("Sheet send error:", err));
 }

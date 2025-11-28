@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0",
   "metadata": {
-    "createdBy": "ppa007",
+    "createdBy": "109",
     "dateCreated": "2025-01-26",
     "documentVersion": "1.0"
   },
@@ -442,7 +442,7 @@
     {
       "scenarioId": "scenario_7",
       "scenarioTitle": "Question 7 of 7",
-      "scenarioDescription": "Which kind of Event does the circle the a thick black border represent?",
+      "scenarioDescription": "Which kind of Event does the circle with a thick black border represent?",
       "resetCanvas": true,
       "tokens": [
         {
