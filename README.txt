@@ -1,7 +1,11 @@
-v.1.0 - 27.11.2025
+v.1.0 - 30.11.2025
 
 To run the program:
 - In directory with index.html you can run a local server. For example through python in terminal with: python -m http.server 8000
+- Or, Open the project in Visual Studio Code and open "index.html" using LiveServer
+- Or, go to gsamundsen.github.io
+
+
 - To upload the learning data you're gathering you need an endpoint to upload it to. We used a google sheet.
 - If you want to make a custom scenario or node-based quiz you can put your own file in the scenarioData folder.
     By default the system reads 'scenario.json' and from there it is possible to chain campaigns using "nextCampaign".
